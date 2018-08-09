@@ -25,16 +25,19 @@ public static final String META = "metadata";
 public static final String TIMESTAMP = "originTimeStamp";
 public static final String TYPE = "fileType";
 public static final String ACTION = "actionName";
+public static final String INVENTORY_LAMBDA_DYNAMODB_NAME = "InventoryLambda_DYNAMODB_NAME";
+
 private Table dbTable;
 
 public IngestionLambda() {
-	String tableName = System.getenv("InventoryLambda_DYNAMODB_NAME");
+	String tableName = System.getenv(INVENTORY_LAMBDA_DYNAMODB_NAME);
 	if (tableName == null || tableName.isEmpty()) {
-		tableName = "platform.infrastructure.dynamodb-catalog.s3rawdocument";
+		tableName = DEFAULT_DYNAMODB_TABLE_NAME;
 	}
 
 	this.log("Using table name: " + tableName);
-	this.dbTable = this.getDynamoDb().getTable(tableName);
+	this.dbTable = this.getDynamoDb()
+			.getTable(tableName);
 }
 
 protected IngestionLambda(AmazonS3 s3Client, DynamoDB dynamoDb, Table dbTable, List<String> allowedDirectories) {
@@ -51,15 +54,22 @@ protected Item createItem(S3EventNotificationRecord record) {
 	Item item = new Item();
 	DateTime dateTime = record.getEventTime();
 	String uuid = this.getUuid(s3Entity, dateTime);
-	item.withPrimaryKey("packageId", uuid).withLong("originTimeStamp", dateTime.getMillis()).withString("filePath", this.getKey(s3Entity)).withLong("fileSize", this.getSizeAsLong(s3Entity)).withString("actionName", this.getEventName(record));
-	String type = this.getSubFolder(s3Entity.getObject().getKey());
+
+	item.withPrimaryKey(KEY, uuid)
+			.withLong(TIMESTAMP, dateTime.getMillis())
+			.withString(PATH, this.getKey(s3Entity))
+			.withLong(SIZE, this.getSizeAsLong(s3Entity))
+			.withString(ACTION, this.getEventName(record));
+
+	String type = this.getSubFolder(s3Entity.getObject()
+			.getKey());
 	if (type != null) {
-		item.withString("fileType", type);
+		item.withString(TYPE, type);
 	}
 
 	String metadata = this.getMetadata(s3Entity);
 	if (metadata != null) {
-		item.withJSON("metadata", metadata);
+		item.withJSON(META, metadata);
 	}
 
 	return item;

@@ -36,8 +36,10 @@ private List<String> allowedDirectories;
 private LambdaLogger logger;
 
 public Application() {
-	this.s3Client = AmazonS3ClientBuilder.standard().build();
-	this.dynamoDb = new DynamoDB((AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1)).build());
+	this.s3Client = AmazonS3ClientBuilder.standard()
+			.build();
+	this.dynamoDb = new DynamoDB((AmazonDynamoDBClientBuilder.standard()
+			.withRegion(Regions.US_EAST_1)).build());
 	this.getAllowedDirectories();
 }
 
@@ -47,17 +49,29 @@ protected Application(AmazonS3 s3Client, DynamoDB dynamoDb, List<String> allowed
 	this.allowedDirectories = allowedDirectories;
 }
 
+/**
+ *
+ * @param event
+ * @param context
+ * @return
+ */
 public List<Item> handleRequest(S3Event event, Context context) {
 	this.setLogger(context);
 	return this.storeEvent(event);
 }
 
+/**
+ *
+ * @param event
+ * @return
+ */
 protected List<Item> storeEvent(S3Event event) {
 	List<Item> items = new ArrayList();
 	this.log("Storing events to dynamo...");
 
 	try {
-		Iterator var3 = event.getRecords().iterator();
+		Iterator var3 = event.getRecords()
+				.iterator();
 
 		while (var3.hasNext()) {
 			S3EventNotificationRecord record = (S3EventNotificationRecord) var3.next();
@@ -65,56 +79,98 @@ protected List<Item> storeEvent(S3Event event) {
 				Item item = this.createItem(record);
 				this.log("Item created: " + item);
 				items.add(item);
-				this.getDbTable().putItem(item);
+				this.getDbTable()
+						.putItem(item);
 				this.log("Item put to dynamo: " + item);
 			}
 		}
-	} catch (Exception var6) {
+	}
+	catch (Exception var6) {
 		this.log(var6.getMessage());
 	}
 
 	return items;
 }
 
+/**
+ *
+ * @return
+ */
 protected abstract Table getDbTable();
 
+/**
+ *
+ * @param var1
+ * @return
+ */
 abstract Item createItem(S3EventNotificationRecord var1);
 
+/**
+ *
+ * @param s3Entity
+ * @return
+ */
 protected String getMetadata(S3Entity s3Entity) {
 	try {
-		ObjectMetadata objectMetadata = this.s3Client.getObjectMetadata(s3Entity.getBucket().getName(), s3Entity.getObject().getKey());
+		ObjectMetadata objectMetadata = this.s3Client.getObjectMetadata(s3Entity.getBucket()
+				.getName(), s3Entity.getObject()
+				.getKey());
 		return (new JSONObject(objectMetadata.getRawMetadata())).toString();
-	} catch (Exception var3) {
+	}
+	catch (Exception var3) {
 		return null;
 	}
 }
 
+/**
+ *
+ * @param s3Entity
+ * @return
+ */
 protected String getKey(S3Entity s3Entity) {
-	return s3Entity.getObject().getKey();
+	return s3Entity.getObject()
+			.getKey();
 }
 
+/**
+ *
+ * @param record
+ * @return
+ */
 protected String getEventName(S3EventNotificationRecord record) {
 	return record.getEventName();
 }
 
+/**
+ *
+ * @param s3Entity
+ * @return
+ */
 protected Long getSizeAsLong(S3Entity s3Entity) {
-	return s3Entity.getObject().getSizeAsLong();
+	return s3Entity.getObject()
+			.getSizeAsLong();
 }
 
+/**
+ *
+ * @param record
+ * @return
+ */
 protected String getUserId(S3EventNotificationRecord record) {
-	return record.getUserIdentity().getPrincipalId();
+	return record.getUserIdentity()
+			.getPrincipalId();
 }
 
 protected void log(String message) {
-	if (this.logger != null && Boolean.getBoolean(System.getenv("InventoryLambda_LOG_ENABLED"))) {
+	if (this.logger != null && Boolean.getBoolean(System.getenv(LOG_ENABLED))) {
 		this.logger.log(message + "\n");
 	}
 
 }
 
 protected String getSubFolder(String path) {
-	if (path != null && !path.isEmpty() && path.contains("/")) {
-		String[] path_parts = path.split("/");
+	if (path != null && !path.isEmpty() && path.contains(PATH_DELIMITER)) {
+		String[] path_parts = path.split(PATH_DELIMITER);
 		return path_parts.length > 0 ? path_parts[0] : null;
 	} else {
 		return null;
@@ -122,10 +178,16 @@ protected String getSubFolder(String path) {
 }
 
 protected String getUuid(S3Entity s3Entity, DateTime dateTime) {
-	String uuidSource = s3Entity.getObject() + s3Entity.getBucket().getArn() + s3Entity + dateTime.toString();
-	return UUID.nameUUIDFromBytes(uuidSource.getBytes()).toString();
+	String uuidSource = s3Entity.getObject() + s3Entity.getBucket()
+			.getArn() + s3Entity + dateTime.toString();
+	return UUID.nameUUIDFromBytes(uuidSource.getBytes())
+			.toString();
 }
 
+/**
+ *
+ * @param context
+ */
 private void setLogger(Context context) {
 	if (context != null) {
 		this.logger = context.getLogger();
@@ -134,22 +196,25 @@ private void setLogger(Context context) {
 }
 
 private void getAllowedDirectories() {
-	String var = System.getenv("InventoryLambda_ALLOWED_DIRECTORIES");
+	String var = System.getenv(ALLOWED_DIRECTORIES);
 	if (var != null && !"all".equalsIgnoreCase(var)) {
-		this.allowedDirectories = Arrays.asList(var.replace("\\s", "").split(","));
+		this.allowedDirectories = Arrays.asList(var.replace("\\s", "")
+				.split(","));
 	} else {
-		this.allowedDirectories = Collections.singletonList("all");
+		this.allowedDirectories = Collections.singletonList(ALL_DIRECTORIES);
 	}
 
 }
 
 private boolean isDirectoryAllowed(S3EventNotificationRecord record) {
-	if (this.allowedDirectories.contains("all")) {
+	if (this.allowedDirectories.contains(ALL_DIRECTORIES)) {
 		this.log("Directory allowed by default");
 		return true;
 	} else {
-		String path = record.getS3().getObject().getKey();
-		String key = path.split("/")[0];
+		String path = record.getS3()
+				.getObject()
+				.getKey();
+		String key = path.split(PATH_DELIMITER)[0];
 		boolean result = this.allowedDirectories.contains(key);
 		if (!result) {
 			this.log("Event [" + path + "] with key [" + key + "] is not among: " + this.allowedDirectories.toString());

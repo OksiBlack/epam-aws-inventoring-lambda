@@ -1,4 +1,4 @@
-package com.ebsco.platform.infrastructure.core;
+package com.ebsco.platform.infrastructure.core.awsclients;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
@@ -9,7 +9,9 @@ import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
-import com.ebsco.platform.utility.Log4j2BasedLogger;
+import com.ebsco.platform.infrastructure.configuration.ConfigConstants;
+import com.ebsco.platform.infrastructure.configuration.PropertiesReader;
+import com.ebsco.platform.infrastructure.utility.Log4j2BasedLogger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,19 +22,20 @@ import java.util.List;
 
 ;
 
-public class AmazonS3Client {
+public class AmazonS3Client implements IFaceAWSClient{
+public static final String S_3_OBJECT_CREATED_ALL = "s3:ObjectCreated:*";
 private AmazonS3 s3;
 public static final Logger logger = LogManager.getLogger();
 
 public AmazonS3Client() {
+
+	PropertiesReader reader = PropertiesReader.getInstance();
+
+	String reg = reader.getProperty(ConfigConstants.P_NAME_AWS_REGION, ConfigConstants.DEFAULT_REGION.getName());
+	Regions regions = Regions.fromName(reg);
 	s3 = AmazonS3ClientBuilder.standard()
-			.withRegion(Regions.US_EAST_1)
+			.withRegion(regions)
 			.build();
-
-
-/*s3 = new com.amazonaws.services.s3.AmazonS3Client();
-	Region usWest2 = Region.getRegion(Regions.US_WEST_2);
-	s3.setRegion(usWest2);*/
 }
 
 /**
@@ -40,6 +43,17 @@ public AmazonS3Client() {
  */
 public AmazonS3Client(AmazonS3 client) {
 	this.s3 = client;
+
+}
+
+/**
+ *
+ * @param regions
+ */
+public AmazonS3Client(Regions regions) {
+	this(AmazonS3ClientBuilder.standard()
+			.withRegion(regions)
+			.build());
 }
 
 /**
@@ -54,6 +68,7 @@ public Bucket createBucketIfNotExists(String bucketName) {
 	} else {
 		try {
 			b = s3.createBucket(bucketName);
+
 		} catch (AmazonS3Exception e) {
 			System.err.println(e.getErrorMessage());
 		}
@@ -63,7 +78,21 @@ public Bucket createBucketIfNotExists(String bucketName) {
 
 }
 
+/**
+ *
+ * @param bucketName
+ * @param lambdaFuncArn
+ */
+public void addBucketNotificationConfiguration(String bucketName,
+											   String lambdaFuncArn){
 
+	BucketNotificationConfiguration configuration = new BucketNotificationConfiguration();
+	configuration.addConfiguration("gghfereertrthythyth", new LambdaConfiguration(lambdaFuncArn,
+			S_3_OBJECT_CREATED_ALL));
+
+	s3.setBucketNotificationConfiguration(bucketName, configuration);
+
+}
 /**
  * @param bucketName
  * @return
@@ -199,6 +228,11 @@ public static void downloadFile(String bucketName, String keyName,
 
 	}
 	transferManager.shutdownNow();
+}
+
+@Override
+public void shutdown() {
+	s3.shutdown();
 }
 }
 

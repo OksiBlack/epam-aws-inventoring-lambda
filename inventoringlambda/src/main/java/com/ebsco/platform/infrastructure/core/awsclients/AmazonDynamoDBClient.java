@@ -1,17 +1,19 @@
-package com.ebsco.platform.infrastructure.core;
+package com.ebsco.platform.infrastructure.core.awsclients;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.ebsco.platform.infrastructure.configuration.ConfigConstants;
+import com.ebsco.platform.infrastructure.configuration.PropertiesReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AmazonDynamoDBClient {
+public class AmazonDynamoDBClient implements IFaceAWSClient{
 public static final String FILE_TYPE = "fileType";
 public static final String FILE_PATH = "filePath";
 public static final String PACKAGE_ID = "packageId";
@@ -30,8 +32,19 @@ public AmazonDynamoDBClient(AmazonDynamoDB ddb) {
 	this.ddb = ddb;
 }
 
+public AmazonDynamoDBClient(Regions regions) {
+	this(AmazonDynamoDBClientBuilder.standard().withRegion(regions).build());
+}
+
 public AmazonDynamoDBClient() {
-	this(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build());
+	PropertiesReader reader = null;
+
+	reader = PropertiesReader.getInstance();
+
+
+	String reg = reader.getProperty(ConfigConstants.P_NAME_AWS_REGION, ConfigConstants.DEFAULT_REGION.getName());
+	Regions regions = Regions.fromName(reg);
+	ddb = AmazonDynamoDBClientBuilder.standard().withRegion(regions).build();
 }
 
 /**
@@ -53,10 +66,10 @@ public CreateTableResult createTable(String tableName) {
 	attributeDefinitions.add(new AttributeDefinition(ORIGIN_TIME_STAMP, ScalarAttributeType.N));
 	attributeDefinitions.add(new AttributeDefinition().withAttributeName(FILE_PATH).withAttributeType("S"));
 	attributeDefinitions.add(new AttributeDefinition().withAttributeName(FILE_TYPE).withAttributeType("S"));
-	attributeDefinitions.add(new AttributeDefinition().withAttributeName(SIZE).withAttributeType("N"));
-	attributeDefinitions.add(new AttributeDefinition().withAttributeName(ACTION).withAttributeType("S"));
-	attributeDefinitions.add(new AttributeDefinition().withAttributeName(USER).withAttributeType("S"));
-	attributeDefinitions.add(new AttributeDefinition().withAttributeName(META).withAttributeType("S"));
+	//attributeDefinitions.add(new AttributeDefinition().withAttributeName(SIZE).withAttributeType("N"));
+	//attributeDefinitions.add(new AttributeDefinition().withAttributeName(ACTION).withAttributeType("S"));
+	//attributeDefinitions.add(new AttributeDefinition().withAttributeName(USER).withAttributeType("S"));
+	//attributeDefinitions.add(new AttributeDefinition().withAttributeName(META).withAttributeType("S"));
 	// Key schema for table
 	ArrayList<KeySchemaElement> tableKeySchema = new ArrayList<>();
 	tableKeySchema.add(new KeySchemaElement().withAttributeName("packageId").withKeyType(KeyType.HASH)); // Partition key
@@ -126,5 +139,10 @@ public boolean createTableIfNotExists(String tableName){
 		createTable(tableName);
 		return true;
 	}
+}
+
+@Override
+public void shutdown() {
+	ddb.shutdown();
 }
 }

@@ -1,4 +1,4 @@
-package com.ebsco.platform.utility;
+package com.ebsco.platform.infrastructure.utility;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;

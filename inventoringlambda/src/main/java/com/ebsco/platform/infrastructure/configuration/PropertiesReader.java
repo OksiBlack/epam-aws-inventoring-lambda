@@ -1,44 +1,108 @@
 package com.ebsco.platform.infrastructure.configuration;
 
-import com.ebsco.platform.utility.PropertiesUtils;
+import com.ebsco.platform.infrastructure.utility.FileUtils;
+import com.ebsco.platform.infrastructure.utility.PropertiesUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import java.io.IOError;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-public class PropertiesReader {
-private Path propPath;
-private Properties properties;
 
-public PropertiesReader(String path) throws IOException {
-	this(Paths.get(path));
+public class PropertiesReader {
+private static PropertiesReader reader = new PropertiesReader();
+
+private Properties properties;
+public static final Logger logger = LogManager.getLogger();
+
+
+private PropertiesReader() {
+	String property = System.getProperty(ConfigConstants.SYS_P_NAME_CONFIG_FILE_NAME,
+			ConfigConstants.DEFAULT_CONFIG_FILE_NAME);
+	try {
+
+		Path propPath = FileUtils.findFirstDeeperInDirByName(Paths.get("."), property);
+		properties = PropertiesUtils.loadProperties(propPath);
+	}
+	catch (IOException e) {
+		throw new IOError(e);
+	}
 
 }
 
+/**
+ * @return
+ */
+public static PropertiesReader getInstance() {
+	return reader;
+}
+
+/**
+ * \
+ *
+ * @return
+ */
 public Properties getProperties() {
 	return properties;
 }
 
-public PropertiesReader(Path path) throws IOException {
-	this.propPath = path;
+/**
+ * @param property
+ * @return
+ */
+public String getProperty(String property) {
+	return properties.getProperty(property);
 }
 
-public PropertiesReader() throws IOException {
-	this(ConfigConstants.CONFIG_FILE_NAME);
+/**
+ * @param property
+ * @param defaultV
+ * @return
+ */
+public String getProperty(String property, String defaultV) {
+	return properties.getProperty(property, defaultV);
 }
 
-public void init() throws IOException {
-	Path path = propPath.toRealPath();
 
-	properties = new Properties();
-	properties.load(Files.newBufferedReader(path));
+/**
+ *
+ * @param property
+ * @param sysPName
+ * @param defaultV
+ * @return
+ */
+public String getProperty(String property, String sysPName, String defaultV) {
+	String prop = properties.getProperty(property);
+	if(prop==null){
+		prop=System.getProperty(sysPName);
+	}
+	return prop==null? defaultV:prop;
+}
 
-	boolean isIDGiven = PropertiesUtils.setSystemPropertyIfPresent(properties, ConfigConstants.SYS_P_NAME_AWS_ID);
+/**
+ * @param propertyName
+ * @param val
+ */
+public void setProperty(String propertyName, String val) {
+	properties.setProperty(propertyName, val);
+}
 
-	boolean isKey = PropertiesUtils.setSystemPropertyIfPresent(properties, ConfigConstants.SYS_P_NAME_AWS_KEY);
+/**
+ * @param properties
+ */
+public void setProperties(Properties properties) {
+	this.properties = properties;
+}
 
+/**
+ * @param path
+ * @throws IOException
+ */
+public void setProperties(Path path) throws IOException {
+	this.properties = PropertiesUtils.loadProperties(path);
 }
 
 
