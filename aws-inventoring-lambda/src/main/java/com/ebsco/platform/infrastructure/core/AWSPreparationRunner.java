@@ -6,7 +6,6 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.lambda.model.CreateFunctionResult;
 import com.amazonaws.services.lambda.model.UpdateFunctionCodeResult;
 import com.ebsco.platform.infrastructure.configuration.ConfigConstants;
-import com.ebsco.platform.infrastructure.configuration.EnvironementPreparator;
 import com.ebsco.platform.infrastructure.configuration.PropertiesReader;
 import com.ebsco.platform.infrastructure.core.awsclients.AmazonDynamoDBClient;
 import com.ebsco.platform.infrastructure.core.awsclients.AmazonLambdaClient;
@@ -20,7 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-public class AWSActionsCoreRunner {
+public class AWSPreparationRunner {
 public static final Logger logger = LogManager.getLogger();
 
 public static void main(String[] args) {
@@ -28,9 +27,6 @@ public static void main(String[] args) {
 
 	try {
 		PropertiesReader reader = PropertiesReader.getInstance();
-
-		EnvironementPreparator preparator = new EnvironementPreparator(reader.getProperties());
-		preparator.prepare();
 
 		Properties properties = reader.getProperties();
 

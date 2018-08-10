@@ -26,6 +26,9 @@ private PropertiesReader() {
 
 		Path propPath = FileUtils.findFirstDeeperInDirByName(Paths.get("."), property);
 		properties = PropertiesUtils.loadProperties(propPath);
+
+		boolean isIDGiven = PropertiesUtils.setSystemPropertyIfPresent(properties, ConfigConstants.SYS_P_NAME_AWS_ID);
+		boolean isKey = PropertiesUtils.setSystemPropertyIfPresent(properties, ConfigConstants.SYS_P_NAME_AWS_KEY);
 	}
 	catch (IOException e) {
 		throw new IOError(e);

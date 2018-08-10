@@ -1,0 +1,123 @@
+group 'com.ebsco.platform.infrastructure'
+version '1.0-SNAPSHOT'
+apply plugin: 'java'
+apply plugin: 'application'
+mainClassName = 'com.ebsco.platform.infrastructure.core.AWSSetupExecutor'
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE"
+    }
+}
+
+apply plugin: "io.spring.dependency-management"
+
+
+/*
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+    }
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+*/
+
+
+dependencyManagement {
+    imports {
+        mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.379'
+    }
+}
+
+dependencies {
+
+
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-lambda'
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-dynamodb'
+
+    compile group: 'com.amazonaws', name: 'aws-lambda-java-core', version: '1.2.0'
+
+    compile group: 'com.amazonaws', name: 'aws-lambda-java-events', version: '2.2.2'
+    compile group: 'org.json', name: 'json', version: '20180130'
+
+    /*  compile group: 'com.amazonaws', name: 'aws-java-sdk-lambda', version: '1.11.379'
+      compile group: 'com.amazonaws', name: 'aws-java-sdk-dynamodb', version: '1.11.379'*/
+
+    compile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.2.0'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.1'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.1'
+
+
+}
+
+
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Jar arthefact. No dependences added.',
+                'Implementation-Version': version,
+                'Main-Class': 'com.ebsco.platform.infrastructure.core.AWSSetupExecutor'
+    }
+}
+
+task buildZip(type: Zip) {
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.compileClasspath
+    }
+}
+
+build.dependsOn buildZip
+
+
+//create a single Jar with all dependencies
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Fat Jar For App Execution from CLI.',
+                'Implementation-Version': version,
+                'Main-Class': 'com.ebsco.platform.infrastructure.core.AWSSetupExecutor'
+    }
+    baseName = project.name + '-with-dependencies'
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    with jar
+}
+
+build.dependsOn fatJar
+
+task testJar(type: Jar) {
+    classifier = 'tests'
+    from  sourceSets.test.output
+}
+
+build.dependsOn testJar
+
+
+
+task fatTestJar(type: Jar) {
+    classifier = 'tests'
+    baseName = project.name + '-tests-with-dependencies'
+
+    from {
+        sourceSets.test.output
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+build.dependsOn fatTestJar
+
