@@ -1,33 +1,33 @@
 package com.ebsco.platform.aqa.tests;
 
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.document.*;
-import com.amazonaws.services.dynamodbv2.xspec.ExpressionSpecBuilder;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.ResourceInUseException;
 import com.amazonaws.services.lambda.model.*;
+import com.amazonaws.services.lambda.model.Runtime;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
-import com.ebsco.platform.aqa.utils.AWSInteractionHelper;
 import com.ebsco.platform.aqa.utils.MiscTestHelperUtils;
+import com.ebsco.platform.configuration.ConfigConstants;
+import com.ebsco.platform.configuration.PropertiesReader;
 import com.ebsco.platform.core.awsclientholders.AmazonDynamoDBClientHolder;
 import com.ebsco.platform.core.awsclientholders.AmazonLambdaClientHolder;
 import com.ebsco.platform.core.awsclientholders.AmazonS3ClientHolder;
 import com.ebsco.platform.core.awsclientholders.IFaceAWSClientHolder;
-import com.ebsco.platform.configuration.ConfigConstants;
-import com.ebsco.platform.configuration.PropertiesReader;
 import com.ebsco.platform.core.helpers.AmazonFileTransferHelper;
-import com.ebsco.platform.utils.DateTimeUtils;
-
 import com.ebsco.platform.utils.FileUtils;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
-import static com.ebsco.platform.core.awsclientholders.AmazonDynamoDBClientHolder.*;
+import static com.ebsco.platform.core.awsclientholders.AmazonDynamoDBClientHolder.logger;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AWSParametersTest {
@@ -47,8 +47,10 @@ private static String lambdaRole = reader.getProperty(ConfigConstants.P_NAME_AWS
 
 private static String handlerName = reader.getProperty(ConfigConstants.P_NAME_AWS_LAMBDA_HANDLER,
 		ConfigConstants.DEFAULT_LAMBDA_HANDLER);
-String functionArn = null;
+
 private static Regions regions = IFaceAWSClientHolder.formRegion(reader.getProperty(ConfigConstants.P_NAME_AWS_REGION, ConfigConstants.DEFAULT_REGION.name()));
+private static String bucket = reader.getProperty(ConfigConstants.P_NAME_AWS_BUCKET_NAME, ConfigConstants.DEFAULT_BUCKET_NAME);
+
 private static AmazonDynamoDBClientHolder dynamoDBClient = new AmazonDynamoDBClientHolder(regions);
 private static AmazonS3ClientHolder amazonS3ClientHolder = new AmazonS3ClientHolder(regions);
 private static AmazonLambdaClientHolder amazonLambdaClient = new AmazonLambdaClientHolder(regions);
@@ -66,14 +68,12 @@ public static void setUpBeforeAll() {
 @DisplayName("Delete not empty bucket. Exception expected")
 
 @Test
-public void testDeleteNotEmpty() throws IOException {
+public void testDeleteNotEmptyBucket() throws IOException {
 
 	String bucket = reader.getProperty(ConfigConstants.P_NAME_AWS_BUCKET_NAME, ConfigConstants.DEFAULT_BUCKET_NAME);
 	String unique = bucket + DASH + UUID.randomUUID();
 
 	amazonS3ClientHolder.createBucketIfNotExists(unique);
-
-	AmazonFileTransferHelper helper = new AmazonFileTransferHelper(amazonS3ClientHolder.getAmazonS3());
 
 	Path sampleFile = MiscTestHelperUtils.createSampleFile("aws-inventoring-lambda-temp", ".txt", 300);
 	String expected = "The bucket you tried to delete is not empty";
@@ -92,7 +92,6 @@ public void testDeleteNotEmpty() throws IOException {
 @DisplayName("Create new bucket. Success")
 @Test
 public void testCreateBucketSuccess() {
-	String bucket = reader.getProperty(ConfigConstants.P_NAME_AWS_BUCKET_NAME, ConfigConstants.DEFAULT_BUCKET_NAME);
 
 	if (amazonS3ClientHolder.doesBucketExists(bucket)) {
 
@@ -109,44 +108,12 @@ public void testCreateBucketSuccess() {
 	logger.info(newBucket);
 
 
-
-/*
-<ul>
-     *      <li>Bucket names should not contain underscores</li>
-     *      <li>Bucket names should be between 3 and 63 characters long</li>
-     *      <li>Bucket names should not end with a dash</li>
-     *      <li>Bucket names cannot contain adjacent periods</li>
-     *      <li>Bucket names cannot contain dashes next to periods (e.g.,
-     *      "my-.bucket.com" and "my.-bucket" are invalid)</li>
-     *      <li>Bucket names cannot contain uppercase characters</li>
-     *  </ul>
- */
-
-
-/*
-  private static final int MIN_BUCKET_NAME_LENGTH = 3;
-    private static final int MAX_BUCKET_NAME_LENGTH = 63;
-                        "Bucket name must not be formatted as an IP Address"
-                                            "Bucket name should not contain white space"
-
-                        "Bucket name should not contain dashes next to periods"
-
-                        "Bucket name should not contain dashes next to periods"
-
-                            "Bucket name should not begin with a '-'"
-
-                    "Bucket name should not contain '" + next + "'"
-
-                "Bucket name should not end with '-' or '.'"
-*/
-
 }
 
 @DisplayName("Not valid parameters passed as bucket name.")
 @Test
 void testInvalidBucketNameSpecified() {
 
-	String[] invalidNames = {"underscores_name", "sh", "192.168.1.5", "space there", "name-with-dashes-after-period.-55", "-with-dash", "quotes'in-st'ring", "end-with-dash-", "end-with."};
 
 	logger.info("Passing invalid bucket names to create bucket request. Exceptions expected.");
 	assertAll(
@@ -222,7 +189,7 @@ void testInvalidBucketNameSpecified() {
 
 
 
-@DisplayName("Null as bucket name to create.")
+@DisplayName("Create bucket. Null as bucket name. Exception expected")
 @Test
 void testNullBucketName() {
 	String bName =null;
@@ -240,75 +207,174 @@ void testNullBucketName() {
 
 }
 
-@DisplayName("Should pass a valid parameter as //todo  name.")
-@ParameterizedTest
-@ValueSource(strings = {"Hel", "World"})
+/**
+ *
+ */
+@DisplayName("Invalid table name. Exception expected")
 @Test
 public void testCreateTableInvalidInput() {
 
+
+	logger.info("Passing invalid bucket names to create bucket request. Exceptions expected.");
+	assertAll(
+
+			() -> {
+				String message = "TableName must be at least 3 characters long and at most 255 characters long";
+				logger.info(message);
+
+				AmazonDynamoDBException ex = assertThrows(AmazonDynamoDBException.class, () -> dynamoDBClient.createTableForIngestionLambda("sh"), message);
+
+				logger.info("Actual exception: {}", ex.getMessage());
+
+				assertTrue(ex.getMessage().contains(message));
+
+			},
+
+
+			() -> {
+
+				String message = "Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+";
+				logger.info(message);
+				AmazonDynamoDBException ex = assertThrows(AmazonDynamoDBException.class, () -> dynamoDBClient.createTableForIngestionLambda("space there"), message);
+				logger.info("Actual exception: {}", ex.getMessage());
+
+				assertTrue(ex.getMessage().contains(message));
+
+			},
+
+			() -> {
+				String message = "Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+";
+				logger.info(message);
+				AmazonDynamoDBException ex = assertThrows(AmazonDynamoDBException.class, () -> dynamoDBClient.createTableForIngestionLambda("quotes'in-st" + "'ring"), message);
+				logger.info("Actual exception: {}", ex.getMessage());
+
+				assertTrue(ex.getMessage().contains(message));
+			},
+
+			() -> {
+				String message = "Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+";
+				logger.info(message);
+				AmazonDynamoDBException ex = assertThrows(AmazonDynamoDBException.class, () -> dynamoDBClient.createTableForIngestionLambda(null), message);
+				logger.info("Actual exception: {}", ex.getMessage());
+
+				assertTrue(ex.getMessage().contains(message));
+			}
+
+
+);
+
+
+
+}@DisplayName("Create table. Null as table name. Exception expected")
+@Test
+void testNullTableName() {
+
+
+	String message = "The parameter 'TableName' is required but was not present in the request";
+	logger.info(message);
+
+	CreateTableRequest createTableRequest = new CreateTableRequest();
+	AmazonDynamoDBException ex = assertThrows(AmazonDynamoDBException.class, () -> {
+		dynamoDBClient.getAmazonDynamoDB().createTable(createTableRequest);
+	}, message);
+
+
+	logger.info("Actual exception: {}", ex.getMessage());
+
+	assertTrue(ex.getMessage().contains(message));
+
 }
 
-@DisplayName("queryWithFilePathGlobalIndex  //todo name.")
+/**
+ *
+ */
+@DisplayName("Create table. Success")
 
 @Test
 public void testCreateTableSuccess() {
-	String tableName = reader.getProperty(ConfigConstants.P_NAME_TABLE_NAME, ConfigConstants.DEFAULT_DYNAMODB_TABLE_NAME);
-	Table table = dynamoDBClient.getTable(tableName);
 
-/*	ExpressionSpecBuilder num2 = new ExpressionSpecBuilder().withCondition(ExpressionSpecBuilder.N
-			("num2")
-			.between(0, 100));*/
+	String tableNameRandom = AWSParametersTest.tableName + "-"+UUID.randomUUID();
+	CreateTableResult createTableResult = dynamoDBClient.createTableForIngestionLambda(tableNameRandom);
 
-	String itemPackId = "1b50b4e7-5af6-35c7-ac5a-c950e90bb269";
+	logger.info(createTableResult);
 
-	ItemCollection<String> collection = dynamoDBClient.queryByPrimaryKey(table, PACKAGE_ID, itemPackId);
+	assertTrue(dynamoDBClient.isTableExists(tableNameRandom));
 
-	for (Item item : collection) {
-		System.out.println(item);
-	}
 
-	//	GetItemRequest item1 = dynamoDBClient.getItem(tableName, PACKAGE_ID, itemPackId);
 
-	//	String s = item1.toString();
 
-	ItemCollection<QueryOutcome> items = AWSInteractionHelper.queryWithFilePathGlobalIndex(tableName, "report.pdf", dynamoDBClient);
+}
+@DisplayName("Create table. Already exists. Exception expected")
 
-	ItemCollection<?> col = table.query(PACKAGE_ID, itemPackId, new RangeKeyCondition(ORIGIN_TIME_STAMP).between(DateTimeUtils.getEpochMillis(), DateTimeUtils.getNowMillis()), new ExpressionSpecBuilder().buildForQuery());
+@Test
+public void testCreateTableAlreadyExists() {
 
-	for (Item item : col) {
-		System.out.println(item.toJSONPretty());
-	}
 
-	ItemCollection<?> co2l = table.query(PACKAGE_ID, itemPackId, new RangeKeyCondition(ORIGIN_TIME_STAMP).between(DateTimeUtils.getEpochMillis(), DateTimeUtils.getNowMillis()), new ExpressionSpecBuilder().buildForQuery());
+	boolean alreadyExists = dynamoDBClient.isTableExists(tableName);
+	if(!alreadyExists){
 
-	for (Item item : col) {
-		System.out.println(item.toJSONPretty());
+		CreateTableResult createTableResult = dynamoDBClient.createTableForIngestionLambda(tableName);
+
+		logger.info("Table created: {} ", createTableResult);
+		assertTrue(dynamoDBClient.isTableExists(tableName));
 	}
 
 
+	String expected = "Table already exists";
+	ResourceInUseException ex = assertThrows(com.amazonaws.services.dynamodbv2.model.ResourceInUseException.class, () -> {
+		logger.info("Expecting exception. {}", expected);
 
-	/*Iterator<Item> iterator = items.iterator();
-	Item item = null;
-	while (iterator.hasNext()) {
-		item = iterator.next();
-		System.out.println(item.toJSONPretty());
-	}
+		CreateTableResult createTableResult = dynamoDBClient.createTableForIngestionLambda(tableName);
 
-*/
+	}, expected);
+	logger.info("Actual exception: {}", ex.getMessage());
+
+	assertTrue(ex.getMessage().contains(expected));
+
+
+
 }
 
-@DisplayName("Should pass a valid parameter as //todo  name.")
-@ParameterizedTest
-@ValueSource(strings = {"Hel", "World"})
+
+
+/**
+ *
+ * @throws IOException
+ */
+@DisplayName("Create function. Zip and FuncCode parameters specified. Exception expected.")
 @Test
-public void testCreateFunctionInvalidInputWithZip() throws IOException {
-
-
+public void testCreateFunctionInvalidFunctionCodeParamsAndZip() throws IOException {
 
 
 	String functionArn = null;
 	Path path = FileUtils.findFirstDeeperInDirByTail(Paths.get("."), ConfigConstants.ZIP_EXTENSION);
-	amazonLambdaClient.createFunctionWithTableNameAsEnvironmentVariable(funcName,path, handlerName,lambdaRole,tableName);
+	String newFunc = funcName + DASH + UUID.randomUUID();
+
+	CreateFunctionRequest request = new CreateFunctionRequest();
+
+	FunctionCode code = new FunctionCode();
+	code
+			.withZipFile(FileUtils.bytesFromFileToByteBuffer(path));
+code.withS3Bucket(bucket);
+	request.withFunctionName(newFunc)
+			.withRole(lambdaRole)
+			.withRuntime(Runtime.Java8)
+			.withHandler(handlerName)
+			.withCode(code);
+
+	String expected = "Please do not provide other FunctionCode parameters when providing a ZipFile";
+	InvalidParameterValueException ex = assertThrows(InvalidParameterValueException.class, () -> {
+		logger.info(expected);
+		amazonLambdaClient.getAwsLambdaClient()
+				.createFunction(request);
+
+	});
+	logger.info("Actual exception: {}", ex.getMessage());
+
+	assertTrue(ex.getMessage().contains(expected));
+
+
+
 
 }
 
@@ -336,7 +402,6 @@ public void testCreateFunctionSuccess() throws IOException {
 }
 
 @DisplayName("Create Function. Exception Already Exists")
-
 @Test
 public void testCreateFunctionAlreadyExists() throws IOException {
 
@@ -358,9 +423,9 @@ public void testCreateFunctionAlreadyExists() throws IOException {
 		amazonLambdaClient.createFunctionWithTableNameAsEnvironmentVariable(funcName, path, handlerName, lambdaRole, tableName);
 
 	}, expected);
+	logger.info("Actual exception: {}", ex.getMessage());
 
 	assertTrue(ex.getMessage().contains(expected));
-	logger.info("Actual exception: {}", ex.getMessage());
 
 
 }
@@ -388,9 +453,11 @@ public void testCreateFunctionNotInvalidZip() throws IOException {
 
 }
 
-
+/**
+ *
+ * @throws IOException
+ */
 @DisplayName("Create Function. Role Invalid name")
-
 @Test
 public void testCreateFunctionRoleNameIllegal() throws IOException {
 
@@ -413,7 +480,10 @@ public void testCreateFunctionRoleNameIllegal() throws IOException {
 
 }
 
-
+/**
+ *
+ * @throws IOException
+ */
 @DisplayName("Create Function. Role doesn't not exist")
 @Test
 public void testCreateFunctionNotExistingRole() throws IOException {
@@ -434,8 +504,6 @@ public void testCreateFunctionNotExistingRole() throws IOException {
 	logger.info("Actual exception: {}", ex.getMessage());
 
 	assertTrue(ex.getMessage().contains(expected));
-
-
 
 }
 }

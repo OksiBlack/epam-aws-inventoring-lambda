@@ -1,6 +1,9 @@
 package com.ebsco.platform.aqa.tests;
 
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.document.*;
+import com.amazonaws.services.dynamodbv2.xspec.ExpressionSpecBuilder;
+import com.ebsco.platform.aqa.utils.AWSInteractionHelper;
 import com.ebsco.platform.core.helpers.AmazonFileTransferHelper;
 import com.ebsco.platform.core.awsclientholders.AmazonDynamoDBClientHolder;
 import com.ebsco.platform.core.awsclientholders.AmazonLambdaClientHolder;
@@ -9,6 +12,7 @@ import com.ebsco.platform.core.awsclientholders.IFaceAWSClientHolder;
 import com.ebsco.platform.configuration.ConfigConstants;
 import com.ebsco.platform.configuration.PropertiesReader;
 import com.ebsco.platform.infrastructure.inventoringlambda.Application;
+import com.ebsco.platform.utils.DateTimeUtils;
 import com.ebsco.platform.utils.FileUtils;
 import org.junit.jupiter.api.*;
 
@@ -16,6 +20,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static com.ebsco.platform.core.awsclientholders.AmazonDynamoDBClientHolder.ORIGIN_TIME_STAMP;
+import static com.ebsco.platform.core.awsclientholders.AmazonDynamoDBClientHolder.PACKAGE_ID;
 
 class AmazonS3FileUploadTest {
 public static final String BIG_FILE_NAME = "DesktopImages-20180731T115600Z-001.zip";
@@ -122,4 +128,54 @@ void uploadFileList() {
 void uploadDirectory() {
 }
 
+/**
+ *
+ */
+@DisplayName("queryWithFilePathGlobalIndex  //todo name.")
+@Test
+public void testCreateTableSuccess() {
+	String tableName = reader.getProperty(ConfigConstants.P_NAME_TABLE_NAME, ConfigConstants.DEFAULT_DYNAMODB_TABLE_NAME);
+	Table table = amazonDynamoDBClientHolder.getTable(tableName);
+
+/*	ExpressionSpecBuilder num2 = new ExpressionSpecBuilder().withCondition(ExpressionSpecBuilder.N
+			("num2")
+			.between(0, 100));*/
+
+	String itemPackId = "1b50b4e7-5af6-35c7-ac5a-c950e90bb269";
+
+	ItemCollection<String> collection = amazonDynamoDBClientHolder.queryByPrimaryKey(table, PACKAGE_ID, itemPackId);
+
+	for (Item item : collection) {
+		System.out.println(item);
+	}
+
+	//	GetItemRequest item1 = dynamoDBClient.getItem(tableName, PACKAGE_ID, itemPackId);
+
+	//	String s = item1.toString();
+
+	ItemCollection<QueryOutcome> items = AWSInteractionHelper.queryWithFilePathGlobalIndex(tableName, "report.pdf", amazonDynamoDBClientHolder);
+
+	ItemCollection<?> col = table.query(PACKAGE_ID, itemPackId, new RangeKeyCondition(ORIGIN_TIME_STAMP).between(DateTimeUtils.getEpochMillis(), DateTimeUtils.getNowMillis()), new ExpressionSpecBuilder().buildForQuery());
+
+	for (Item item : col) {
+		System.out.println(item.toJSONPretty());
+	}
+
+	ItemCollection<?> co2l = table.query(PACKAGE_ID, itemPackId, new RangeKeyCondition(ORIGIN_TIME_STAMP).between(DateTimeUtils.getEpochMillis(), DateTimeUtils.getNowMillis()), new ExpressionSpecBuilder().buildForQuery());
+
+	for (Item item : col) {
+		System.out.println(item.toJSONPretty());
+	}
+
+
+
+	/*Iterator<Item> iterator = items.iterator();
+	Item item = null;
+	while (iterator.hasNext()) {
+		item = iterator.next();
+		System.out.println(item.toJSONPretty());
+	}
+
+*/
+}
 }

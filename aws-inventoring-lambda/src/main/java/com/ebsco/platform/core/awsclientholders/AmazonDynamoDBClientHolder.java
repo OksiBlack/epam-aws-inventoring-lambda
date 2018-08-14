@@ -144,10 +144,10 @@ public PutItemResult addNewItem(String tableName,  String keyName, String keyVal
  */
 public CreateTableResult createTableForIngestionLambda(String tableName) {
 
-	if (tableName == null) {
+	/*if (tableName == null) {
 		throw new IllegalArgumentException("You must specify table name.");
 	}
-
+*/
 
 	// Attribute definitions
 	ArrayList<AttributeDefinition> attributeDefinitions = new ArrayList<>();
@@ -182,19 +182,11 @@ public CreateTableResult createTableForIngestionLambda(String tableName) {
 			.withProjection(new Projection().withProjectionType("KEYS_ONLY"));
 
 
-	CreateTableRequest request = createTable(tableName, attributeDefinitions, tableKeySchema, filePathIndex, fileTypeIndex);
+	CreateTableRequest request = formCreateTableRequest(tableName, attributeDefinitions, tableKeySchema, filePathIndex, fileTypeIndex);
 
-	CreateTableResult result = null;
+	CreateTableResult result = amazonDynamoDB.createTable(request);
 
-	try {
-		result = amazonDynamoDB.createTable(request);
-		logger.info(result.getTableDescription().getTableName());
-
-
-	} catch (AmazonServiceException e) {
-		logger.error(e.getErrorMessage(), e);
-		System.exit(-1);
-	}
+	logger.info(result.getTableDescription().getTableName());
 	logger.info(result);
 	logger.info("Done!");
 
@@ -209,7 +201,7 @@ public CreateTableResult createTableForIngestionLambda(String tableName) {
  * @param globalSecondaryIndexes
  * @return
  */
-public CreateTableRequest createTable(String tableName, List<AttributeDefinition> attributeDefinitions, List<KeySchemaElement> tableKeySchema, GlobalSecondaryIndex... globalSecondaryIndexes) {
+public CreateTableRequest formCreateTableRequest(String tableName, List<AttributeDefinition> attributeDefinitions, List<KeySchemaElement> tableKeySchema, GlobalSecondaryIndex... globalSecondaryIndexes) {
 	return new CreateTableRequest().withTableName(tableName)
 				.withProvisionedThroughput(
 						new ProvisionedThroughput().withReadCapacityUnits((long) 1).withWriteCapacityUnits((long) 1))
@@ -234,15 +226,33 @@ public ListTablesResult listTables() {
  * @return
  */
 public boolean createTableIfNotExists(String tableName){
+
 	List<String> tableNames = listTables().getTableNames();
 	if(tableNames.contains(tableName)){
-		return false;
+		return true;
 	}else{
 		createTableForIngestionLambda(tableName);
 		return true;
 	}
 }
 
+/**
+ *
+ * @param tableName
+ * @return
+ */
+public boolean isTableExists(String tableName){
+	boolean res = false;
+
+	List<String> tableNames = listTables().getTableNames();
+	if (tableNames.contains(tableName)) {
+		res = true;
+	}
+
+	System.out.println(tableNames);
+
+	return res;
+}
 
 
 /**
