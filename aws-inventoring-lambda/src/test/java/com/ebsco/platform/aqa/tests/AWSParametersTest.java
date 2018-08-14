@@ -34,13 +34,10 @@ public class AWSParametersTest {
 
 public static final String DASH = "-";
 
-
 private static PropertiesReader reader = PropertiesReader.getInstance();
 
 private static String funcName = reader.getProperty(ConfigConstants.P_NAME_AWS_LAMBDA_FUNCTION_NAME);
-private static 		String tableName = reader.getProperty(ConfigConstants.P_NAME_TABLE_NAME);
-
-
+private static String tableName = reader.getProperty(ConfigConstants.P_NAME_TABLE_NAME);
 
 private static String lambdaRole = reader.getProperty(ConfigConstants.P_NAME_AWS_LAMBDA_ROLE,
 		ConfigConstants.DEFAULT_LAMBDA_ROLE);
@@ -85,7 +82,8 @@ public void testDeleteNotEmptyBucket() throws IOException {
 
 	}, expected);
 
-	assertTrue(ex.getMessage().contains(expected), expected);
+	assertTrue(ex.getMessage()
+			.contains(expected), expected);
 
 }
 
@@ -107,13 +105,11 @@ public void testCreateBucketSuccess() {
 	assertTrue(amazonS3ClientHolder.doesBucketExists(bucket), "Bucket should exist now.");
 	logger.info(newBucket);
 
-
 }
 
 @DisplayName("Not valid parameters passed as bucket name.")
 @Test
 void testInvalidBucketNameSpecified() {
-
 
 	logger.info("Passing invalid bucket names to create bucket request. Exceptions expected.");
 	assertAll(
@@ -187,12 +183,10 @@ void testInvalidBucketNameSpecified() {
 
 }
 
-
-
 @DisplayName("Create bucket. Null as bucket name. Exception expected")
 @Test
 void testNullBucketName() {
-	String bName =null;
+	String bName = null;
 
 	String message = "The bucket name parameter must be specified when creating a bucket";
 	logger.info(message);
@@ -201,7 +195,6 @@ void testNullBucketName() {
 		amazonS3ClientHolder.getAmazonS3()
 				.createBucket(bName);
 	}, message);
-
 
 	assertEquals(message, ex.getMessage());
 
@@ -214,7 +207,6 @@ void testNullBucketName() {
 @Test
 public void testCreateTableInvalidInput() {
 
-
 	logger.info("Passing invalid bucket names to create bucket request. Exceptions expected.");
 	assertAll(
 
@@ -226,10 +218,10 @@ public void testCreateTableInvalidInput() {
 
 				logger.info("Actual exception: {}", ex.getMessage());
 
-				assertTrue(ex.getMessage().contains(message));
+				assertTrue(ex.getMessage()
+						.contains(message));
 
 			},
-
 
 			() -> {
 
@@ -238,7 +230,8 @@ public void testCreateTableInvalidInput() {
 				AmazonDynamoDBException ex = assertThrows(AmazonDynamoDBException.class, () -> dynamoDBClient.createTableForIngestionLambda("space there"), message);
 				logger.info("Actual exception: {}", ex.getMessage());
 
-				assertTrue(ex.getMessage().contains(message));
+				assertTrue(ex.getMessage()
+						.contains(message));
 
 			},
 
@@ -248,7 +241,8 @@ public void testCreateTableInvalidInput() {
 				AmazonDynamoDBException ex = assertThrows(AmazonDynamoDBException.class, () -> dynamoDBClient.createTableForIngestionLambda("quotes'in-st" + "'ring"), message);
 				logger.info("Actual exception: {}", ex.getMessage());
 
-				assertTrue(ex.getMessage().contains(message));
+				assertTrue(ex.getMessage()
+						.contains(message));
 			},
 
 			() -> {
@@ -257,31 +251,31 @@ public void testCreateTableInvalidInput() {
 				AmazonDynamoDBException ex = assertThrows(AmazonDynamoDBException.class, () -> dynamoDBClient.createTableForIngestionLambda(null), message);
 				logger.info("Actual exception: {}", ex.getMessage());
 
-				assertTrue(ex.getMessage().contains(message));
+				assertTrue(ex.getMessage()
+						.contains(message));
 			}
 
+	);
 
-);
+}
 
-
-
-}@DisplayName("Create table. Null as table name. Exception expected")
+@DisplayName("Create table. Null as table name. Exception expected")
 @Test
 void testNullTableName() {
-
 
 	String message = "The parameter 'TableName' is required but was not present in the request";
 	logger.info(message);
 
 	CreateTableRequest createTableRequest = new CreateTableRequest();
 	AmazonDynamoDBException ex = assertThrows(AmazonDynamoDBException.class, () -> {
-		dynamoDBClient.getAmazonDynamoDB().createTable(createTableRequest);
+		dynamoDBClient.getAmazonDynamoDB()
+				.createTable(createTableRequest);
 	}, message);
-
 
 	logger.info("Actual exception: {}", ex.getMessage());
 
-	assertTrue(ex.getMessage().contains(message));
+	assertTrue(ex.getMessage()
+			.contains(message));
 
 }
 
@@ -293,32 +287,28 @@ void testNullTableName() {
 @Test
 public void testCreateTableSuccess() {
 
-	String tableNameRandom = AWSParametersTest.tableName + "-"+UUID.randomUUID();
+	String tableNameRandom = AWSParametersTest.tableName + "-" + UUID.randomUUID();
 	CreateTableResult createTableResult = dynamoDBClient.createTableForIngestionLambda(tableNameRandom);
 
 	logger.info(createTableResult);
 
 	assertTrue(dynamoDBClient.isTableExists(tableNameRandom));
 
-
-
-
 }
+
 @DisplayName("Create table. Already exists. Exception expected")
 
 @Test
 public void testCreateTableAlreadyExists() {
 
-
 	boolean alreadyExists = dynamoDBClient.isTableExists(tableName);
-	if(!alreadyExists){
+	if (!alreadyExists) {
 
 		CreateTableResult createTableResult = dynamoDBClient.createTableForIngestionLambda(tableName);
 
 		logger.info("Table created: {} ", createTableResult);
 		assertTrue(dynamoDBClient.isTableExists(tableName));
 	}
-
 
 	String expected = "Table already exists";
 	ResourceInUseException ex = assertThrows(com.amazonaws.services.dynamodbv2.model.ResourceInUseException.class, () -> {
@@ -329,22 +319,17 @@ public void testCreateTableAlreadyExists() {
 	}, expected);
 	logger.info("Actual exception: {}", ex.getMessage());
 
-	assertTrue(ex.getMessage().contains(expected));
-
-
+	assertTrue(ex.getMessage()
+			.contains(expected));
 
 }
 
-
-
 /**
- *
  * @throws IOException
  */
 @DisplayName("Create function. Zip and FuncCode parameters specified. Exception expected.")
 @Test
 public void testCreateFunctionInvalidFunctionCodeParamsAndZip() throws IOException {
-
 
 	String functionArn = null;
 	Path path = FileUtils.findFirstDeeperInDirByTail(Paths.get("."), ConfigConstants.ZIP_EXTENSION);
@@ -355,7 +340,7 @@ public void testCreateFunctionInvalidFunctionCodeParamsAndZip() throws IOExcepti
 	FunctionCode code = new FunctionCode();
 	code
 			.withZipFile(FileUtils.bytesFromFileToByteBuffer(path));
-code.withS3Bucket(bucket);
+	code.withS3Bucket(bucket);
 	request.withFunctionName(newFunc)
 			.withRole(lambdaRole)
 			.withRuntime(Runtime.Java8)
@@ -371,10 +356,8 @@ code.withS3Bucket(bucket);
 	});
 	logger.info("Actual exception: {}", ex.getMessage());
 
-	assertTrue(ex.getMessage().contains(expected));
-
-
-
+	assertTrue(ex.getMessage()
+			.contains(expected));
 
 }
 
@@ -383,11 +366,10 @@ code.withS3Bucket(bucket);
 @Test
 public void testCreateFunctionSuccess() throws IOException {
 
-
 	Path path = FileUtils.findFirstDeeperInDirByTail(Paths.get("."), ConfigConstants.ZIP_EXTENSION);
 
 	boolean functionAlreadyExists = amazonLambdaClient.isFunctionAlreadyExists(funcName);
-	if(functionAlreadyExists){
+	if (functionAlreadyExists) {
 		DeleteFunctionResult deleteFunctionResult = amazonLambdaClient.deleteFunction(funcName);
 		logger.info(deleteFunctionResult);
 
@@ -405,16 +387,14 @@ public void testCreateFunctionSuccess() throws IOException {
 @Test
 public void testCreateFunctionAlreadyExists() throws IOException {
 
-
 	Path path = FileUtils.findFirstDeeperInDirByTail(Paths.get("."), ConfigConstants.ZIP_EXTENSION);
 
 	boolean functionAlreadyExists = amazonLambdaClient.isFunctionAlreadyExists(funcName);
-	if(!functionAlreadyExists){
+	if (!functionAlreadyExists) {
 		CreateFunctionResult functionWithTableNameAsEnvironmentVariable = amazonLambdaClient.createFunctionWithTableNameAsEnvironmentVariable(funcName, path, handlerName, lambdaRole, tableName);
 		logger.info("Function created: {} ", functionWithTableNameAsEnvironmentVariable);
 		assertTrue(amazonLambdaClient.isFunctionAlreadyExists(funcName));
 	}
-
 
 	String expected = "Function already exist";
 	ResourceConflictException ex = assertThrows(ResourceConflictException.class, () -> {
@@ -425,8 +405,8 @@ public void testCreateFunctionAlreadyExists() throws IOException {
 	}, expected);
 	logger.info("Actual exception: {}", ex.getMessage());
 
-	assertTrue(ex.getMessage().contains(expected));
-
+	assertTrue(ex.getMessage()
+			.contains(expected));
 
 }
 
@@ -435,11 +415,9 @@ public void testCreateFunctionAlreadyExists() throws IOException {
 @Test
 public void testCreateFunctionNotInvalidZip() throws IOException {
 
-
 	Path path = FileUtils.findFirstDeeperInDirByTail(Paths.get("."), ".xml");
 
-
-		String expected = "Could not unzip uploaded file. Please check your file, then try to upload again.";
+	String expected = "Could not unzip uploaded file. Please check your file, then try to upload again.";
 	InvalidParameterValueException ex = assertThrows(InvalidParameterValueException.class, () -> {
 
 		amazonLambdaClient.createFunctionWithTableNameAsEnvironmentVariable(funcName, path, handlerName, lambdaRole, tableName);
@@ -448,22 +426,19 @@ public void testCreateFunctionNotInvalidZip() throws IOException {
 
 	logger.info("Actual exception: {}", ex.getMessage());
 
-	assertTrue(ex.getMessage().contains(expected));
-
+	assertTrue(ex.getMessage()
+			.contains(expected));
 
 }
 
 /**
- *
  * @throws IOException
  */
 @DisplayName("Create Function. Role Invalid name")
 @Test
 public void testCreateFunctionRoleNameIllegal() throws IOException {
 
-
 	Path path = FileUtils.findFirstDeeperInDirByTail(Paths.get("."), ConfigConstants.ZIP_EXTENSION);
-
 
 	String expected = "failed to satisfy constraint: Member must satisfy regular expression pattern: arn:(aws[a-zA-Z-]*)?:iam::\\d{12}:role/?[a-zA-Z_0-9+=,.@\\-_/]+";
 	AWSLambdaException ex = assertThrows(AWSLambdaException.class, () -> {
@@ -474,26 +449,23 @@ public void testCreateFunctionRoleNameIllegal() throws IOException {
 	}, expected);
 	logger.info("Actual exception: {}", ex.getMessage());
 
-	assertTrue(ex.getMessage().contains(expected));
-
-
+	assertTrue(ex.getMessage()
+			.contains(expected));
 
 }
 
 /**
- *
  * @throws IOException
  */
 @DisplayName("Create Function. Role doesn't not exist")
 @Test
 public void testCreateFunctionNotExistingRole() throws IOException {
 
-
 	Path path = FileUtils.findFirstDeeperInDirByTail(Paths.get("."), ConfigConstants.ZIP_EXTENSION);
 
 	String newFunc = funcName + DASH + UUID.randomUUID();
 
-	String fakeRole ="arn:aws:iam::501805042275:role/aws-lambda-full-access-not-exists";
+	String fakeRole = "arn:aws:iam::501805042275:role/aws-lambda-full-access-not-exists";
 	String expected = "The role defined for the function cannot be assumed by Lambda";
 	AWSLambdaException ex = assertThrows(AWSLambdaException.class, () -> {
 
@@ -503,7 +475,75 @@ public void testCreateFunctionNotExistingRole() throws IOException {
 	}, expected);
 	logger.info("Actual exception: {}", ex.getMessage());
 
-	assertTrue(ex.getMessage().contains(expected));
+	assertTrue(ex.getMessage()
+			.contains(expected));
 
+}
+
+@DisplayName("Create Function. Invalid function name. Exception expected")
+@Test
+public void testCreateFunctionInvalidParams() throws IOException {
+
+	Path path = FileUtils.findFirstDeeperInDirByTail(Paths.get("."), ConfigConstants.ZIP_EXTENSION);
+
+	String errorTemplate = "'functionName' failed to satisfy constraint: Member must satisfy regular expression pattern: (arn:(aws[a-zA-Z-]*)?:lambda:)?([a-z]{2}((-gov)|(-iso(b?)))?-[a-z]+-\\d{1}:)?(\\d{12}:)?(function:)?([a-zA-Z0-9-_]+)(:" +
+			"(\\$LATEST|[a-zA-Z0-9-_]+))?";
+
+	logger.info("Passing invalid function names to create function request. Exceptions expected.");
+	assertAll(
+
+			() -> {
+				String message = "Function name should not be 192.168.1.5";
+				logger.info(message);
+
+				AWSLambdaException ex = assertThrows(AWSLambdaException.class, () -> amazonLambdaClient.createFunctionWithTableNameAsEnvironmentVariable("192.168.1.5", path, handlerName, lambdaRole, tableName), errorTemplate);
+				logger.info("Actual exception: {}", ex.getMessage());
+
+				assertTrue(ex.getMessage()
+						.contains(errorTemplate));
+			},
+
+			() -> {
+
+				String message = "Spaces not allowed in function name";
+				logger.info(message);
+				AWSLambdaException ex = assertThrows(AWSLambdaException.class, () -> amazonLambdaClient.createFunctionWithTableNameAsEnvironmentVariable("space there", path, handlerName, lambdaRole, tableName), errorTemplate);
+				logger.info("Actual exception: {}", ex.getMessage());
+
+				assertTrue(ex.getMessage()
+						.contains(errorTemplate));
+			},
+
+			() -> {
+				String message = "name-with-dashes-after-period.-55";
+				logger.info(message);
+				AWSLambdaException ex = assertThrows(AWSLambdaException.class, () -> amazonLambdaClient.createFunctionWithTableNameAsEnvironmentVariable("name-with-dashes-after-period.-55", path, handlerName, lambdaRole, tableName), errorTemplate);
+				logger.info("Actual exception: {}", ex.getMessage());
+
+				assertTrue(ex.getMessage()
+						.contains(errorTemplate));
+			},
+
+			() -> {
+				String message = "Function name should not contain '''";
+				logger.info(message);
+				AWSLambdaException ex = assertThrows(AWSLambdaException.class, () -> amazonLambdaClient.createFunctionWithTableNameAsEnvironmentVariable("quotes'in-st-'ring", path, handlerName, lambdaRole, tableName), errorTemplate);
+				logger.info("Actual exception: {}", ex.getMessage());
+
+				assertTrue(ex.getMessage()
+						.contains(errorTemplate));
+			},
+
+			() -> assertThrows(AWSLambdaException.class, () -> amazonLambdaClient.createFunctionWithTableNameAsEnvironmentVariable("end-with-dash-", path, handlerName, lambdaRole, tableName)),
+
+			() -> {
+				String message = "Function name should not end with '-' or " + "'.'";
+				logger.info(message);
+				AWSLambdaException ex = assertThrows(AWSLambdaException.class, () -> amazonLambdaClient.createFunctionWithTableNameAsEnvironmentVariable("end-with.", path, handlerName, lambdaRole, tableName), errorTemplate);
+				logger.info("Actual exception: {}", ex.getMessage());
+
+				assertTrue(ex.getMessage()
+						.contains(errorTemplate));
+			});
 }
 }
