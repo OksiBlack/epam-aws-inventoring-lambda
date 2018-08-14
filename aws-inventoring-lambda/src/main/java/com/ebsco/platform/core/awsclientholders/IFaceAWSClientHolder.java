@@ -1,8 +1,8 @@
-package com.ebsco.platform.infrastructure.core.awsclients;
+package com.ebsco.platform.core.awsclientholders;
 
 import com.amazonaws.regions.Regions;
 
-public interface IFaceAWSClient {
+public interface IFaceAWSClientHolder {
 	void shutdown();
 
 /**

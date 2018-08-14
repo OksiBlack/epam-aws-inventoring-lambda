@@ -77,13 +77,18 @@
 
    <Loggers>
       <!-- Every configuration must have a root logger. If one is not configured the default root LoggerConfig is ERROR with Console appender attached. -->
-      <Root level="DEBUG">
+      <Root level="INFO">
          <AppenderRef ref="SOUT"/>
          <AppenderRef ref="SERR"/>
 
       </Root>
 
 
+	   <Logger name="org.junit" level="DEBUG">
+		   <AppenderRef ref="SOUT"/>
+		   <AppenderRef ref="SERR"/>
+
+	   </Logger>
       <!-- additivity means, that parent-logger (in every case the root-logger) will also get the chance to log this stuff -->
       <Logger name="com.ebsco.platform" additivity="TRUE" level="DEBUG">
          <AppenderRef ref="debug"/>
@@ -91,6 +96,16 @@
         
       </Logger>
 
+      <Logger name="com.amazonaws" additivity="TRUE" level="WARN">
+         <AppenderRef ref="debug"/>
+         <AppenderRef ref="onFail"/>
+         <AppenderRef ref="SOUT"/>
+         <AppenderRef ref="SERR"/>
+      </Logger>
+
+      <Logger name="com.amazonaws.request" additivity="TRUE" level="WARN"/>
+
+      <Logger name="org.apache.http.wire" additivity="TRUE" level="ERROR"/>
 
    </Loggers>
 </Configuration>

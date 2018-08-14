@@ -2,13 +2,23 @@ group 'com.ebsco.platform.infrastructure'
 version '1.0-SNAPSHOT'
 apply plugin: 'java'
 apply plugin: 'application'
-mainClassName = 'com.ebsco.platform.infrastructure.core.AWSSetupExecutor'
+apply plugin: 'idea'
+
+mainClassName = 'com.ebsco.platform.core.AWSPreparationRunner'
 sourceCompatibility = 1.8
+
 
 repositories {
     mavenCentral()
 }
 
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources=true
+
+    }
+}
 
 buildscript {
     repositories {
@@ -20,7 +30,6 @@ buildscript {
 }
 
 apply plugin: "io.spring.dependency-management"
-
 
 /*
 buildscript {
@@ -56,20 +65,41 @@ dependencies {
     /*  compile group: 'com.amazonaws', name: 'aws-java-sdk-lambda', version: '1.11.379'
       compile group: 'com.amazonaws', name: 'aws-java-sdk-dynamodb', version: '1.11.379'*/
 
-    compile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.2.0'
+
+
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.1'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.1'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-1.2-api', version: '2.11.1'
 
+    testCompile('org.junit.jupiter:junit-jupiter-params:5.2.0')
+    testCompile('org.junit.jupiter:junit-jupiter-api:5.2.0')
+
+    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.2.0')
 
 }
 
 
+test {
+    exclude '**/*'
 
+    useJUnitPlatform()
+    environment "InventoryLambda_DYNAMODB_NAME", "NEW_TABLE"
+
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+      testLogging.showStandardStreams = true
+
+    ignoreFailures = true
+    reports {
+        html.enabled = true
+    }
+}
 jar {
     manifest {
         attributes 'Implementation-Title': 'Gradle Jar arthefact. No dependences added.',
                 'Implementation-Version': version,
-                'Main-Class': 'com.ebsco.platform.infrastructure.core.AWSSetupExecutor'
+                'Main-Class': 'com.ebsco.platform.core.AWSPreparationRunner'
     }
 }
 
@@ -83,17 +113,17 @@ task buildZip(type: Zip) {
 
 build.dependsOn buildZip
 
-
 //create a single Jar with all dependencies
 task fatJar(type: Jar) {
     manifest {
         attributes 'Implementation-Title': 'Gradle Fat Jar For App Execution from CLI.',
                 'Implementation-Version': version,
-                'Main-Class': 'com.ebsco.platform.infrastructure.core.AWSSetupExecutor'
+                'Main-Class': 'com.ebsco.platform.core.AWSPreparationRunner'
     }
     baseName = project.name + '-with-dependencies'
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+
     }
     with jar
 }
@@ -102,7 +132,7 @@ build.dependsOn fatJar
 
 task testJar(type: Jar) {
     classifier = 'tests'
-    from  sourceSets.test.output
+    from sourceSets.test.output
 }
 
 build.dependsOn testJar

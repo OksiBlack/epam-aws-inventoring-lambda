@@ -1,19 +1,19 @@
-package com.ebsco.platform.infrastructure.core;
+package com.ebsco.platform.core;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.lambda.model.CreateFunctionResult;
 import com.amazonaws.services.lambda.model.UpdateFunctionCodeResult;
-import com.ebsco.platform.infrastructure.configuration.ConfigConstants;
-import com.ebsco.platform.infrastructure.configuration.PropertiesReader;
-import com.ebsco.platform.infrastructure.core.awsclients.AmazonDynamoDBClient;
-import com.ebsco.platform.infrastructure.core.awsclients.AmazonLambdaClient;
-import com.ebsco.platform.infrastructure.core.awsclients.AmazonS3Client;
-import com.ebsco.platform.infrastructure.core.awsclients.IFaceAWSClient;
-import com.ebsco.platform.infrastructure.utility.FileUtils;
+import com.ebsco.platform.core.awsclientholders.*;
+import com.ebsco.platform.configuration.ConfigConstants;
+import com.ebsco.platform.configuration.PropertiesReader;
+import com.ebsco.platform.core.awsclientholders.AmazonLambdaClientHolder;
+import com.ebsco.platform.core.awsclientholders.AmazonS3ClientHolder;
+import com.ebsco.platform.utils.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,6 +26,7 @@ public static void main(String[] args) {
 
 
 	try {
+
 		PropertiesReader reader = PropertiesReader.getInstance();
 
 		Properties properties = reader.getProperties();
@@ -33,10 +34,23 @@ public static void main(String[] args) {
 		String regionProp = reader.getProperty(ConfigConstants.P_NAME_AWS_REGION,
 				ConfigConstants.DEFAULT_REGION.getName());
 
-		Regions region = IFaceAWSClient.formRegion(regionProp);
+		Regions region = IFaceAWSClientHolder.formRegion(regionProp);
 
+		/*
+		Create a new bucket if it is not already exists.
+		*/
+		AmazonS3ClientHolder s3Client = new AmazonS3ClientHolder(region);
 
-		AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(region);
+		String bName = properties.getProperty(ConfigConstants.P_NAME_AWS_BUCKET_NAME);
+		if (bName == null) {
+			throw new IllegalArgumentException("Bucket name must be provided.");
+		}
+
+		s3Client.createBucketIfNotExists(bName);
+
+		/*	Create Dynamo DB Table	*/
+
+		AmazonDynamoDBClientHolder dynamoDBClient = new AmazonDynamoDBClientHolder(region);
 		String tableName = properties.getProperty(ConfigConstants.P_NAME_TABLE_NAME);
 
 		if (tableName == null) {
@@ -47,12 +61,15 @@ public static void main(String[] args) {
 		String msg = tableIfNotExists ? "Table created" : "Table already exists. No action";
 		logger.info(msg);
 
-		AmazonLambdaClient lambdaClient = new AmazonLambdaClient(region);
+
+		/*
+		Upload .zip file with Lambda Function code to Lambda
+		 */
+		AmazonLambdaClientHolder lambdaClient = new AmazonLambdaClientHolder(region);
 
 		String funcName = reader.getProperty(ConfigConstants.P_NAME_AWS_LAMBDA_FUNCTION_NAME);
 
-		Path path = null;
-		path = FileUtils.findFirstDeeperInDirByTail(Paths.get("."), ConfigConstants.ZIP_EXTENSION);
+		Path path = FileUtils.findFirstDeeperInDirByTail(Paths.get("."), ConfigConstants.ZIP_EXTENSION);
 
 
 		String lambdaRole = reader.getProperty(ConfigConstants.P_NAME_AWS_LAMBDA_ROLE,
@@ -61,29 +78,29 @@ public static void main(String[] args) {
 		String defaultLambdaHandler = reader.getProperty(ConfigConstants.P_NAME_AWS_LAMBDA_HANDLER,
 				ConfigConstants.DEFAULT_LAMBDA_HANDLER);
 		String functionArn = null;
+
+		/*
+		If function with specified name already exists - update code, otherwise create new by uploading zip file.
+		 */
 		if (lambdaClient.isFunctionAlreadyExists(funcName)) {
 			UpdateFunctionCodeResult updateFunctionCodeResult = lambdaClient.updateFunctionCode(funcName, path);
 			functionArn = updateFunctionCodeResult.getFunctionArn();
 			logger.info("Code updated. Function name: {}. Function Arn:{}.", updateFunctionCodeResult.getFunctionName(),
 					functionArn);
 		} else {
-			CreateFunctionResult createFunctionResult = lambdaClient.createFunction(funcName, path, defaultLambdaHandler,
-					lambdaRole);
+			CreateFunctionResult createFunctionResult = lambdaClient.createFunctionWithTableNameAsEnvironmentVariable(funcName, path, defaultLambdaHandler,
+					lambdaRole, tableName);
+
 			logger.info("Function created. Function name: {}. Function Arn:{}.",
 					createFunctionResult.getFunctionName(), createFunctionResult.getFunctionArn());
 			functionArn = createFunctionResult.getFunctionArn();
 
 		}
 
-		AmazonS3Client s3Client = new AmazonS3Client(region);
-
-		String bName = properties.getProperty(ConfigConstants.P_NAME_AWS_BUCKET_NAME);
-		if (bName == null) {
-			throw new IllegalArgumentException("Bucket name must be provided.");
-		}
-
-		s3Client.createBucketIfNotExists(bName);
+		/*	Give s3 permission to invoke Lambda Function	*/
 		lambdaClient.addPermissionForS3ToInvokeLambda(funcName);
+
+		/*	Configure a Bucket for Notifications (Message Destination: AWS Lambda Function)	*/
 		s3Client.addBucketNotificationConfiguration(bName, functionArn);
 
 

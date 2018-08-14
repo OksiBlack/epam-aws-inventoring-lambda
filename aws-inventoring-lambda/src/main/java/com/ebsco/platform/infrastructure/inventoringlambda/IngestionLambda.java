@@ -25,12 +25,11 @@ public static final String META = "metadata";
 public static final String TIMESTAMP = "originTimeStamp";
 public static final String TYPE = "fileType";
 public static final String ACTION = "actionName";
-public static final String INVENTORY_LAMBDA_DYNAMODB_NAME = "InventoryLambda_DYNAMODB_NAME";
-
+public static final String PACKAGE_ID = "packageId";
 private Table dbTable;
 
 public IngestionLambda() {
-	String tableName = System.getenv(INVENTORY_LAMBDA_DYNAMODB_NAME);
+	String tableName = System.getenv(DYNAMODB_TABLE);
 	if (tableName == null || tableName.isEmpty()) {
 		tableName = DEFAULT_DYNAMODB_TABLE_NAME;
 	}
@@ -54,13 +53,13 @@ protected Item createItem(S3EventNotificationRecord record) {
 	Item item = new Item();
 	DateTime dateTime = record.getEventTime();
 	String uuid = this.getUuid(s3Entity, dateTime);
-
-	item.withPrimaryKey(KEY, uuid)
+	item.withPrimaryKey(PACKAGE_ID, uuid)
 			.withLong(TIMESTAMP, dateTime.getMillis())
-			.withString(PATH, this.getKey(s3Entity))
+			.withString(PATH,
+					this.getKey(s3Entity))
 			.withLong(SIZE, this.getSizeAsLong(s3Entity))
-			.withString(ACTION, this.getEventName(record));
-
+			.withString(ACTION,
+					this.getEventName(record));
 	String type = this.getSubFolder(s3Entity.getObject()
 			.getKey());
 	if (type != null) {

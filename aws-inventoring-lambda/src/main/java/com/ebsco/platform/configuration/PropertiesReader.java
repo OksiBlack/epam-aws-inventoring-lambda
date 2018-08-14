@@ -1,7 +1,7 @@
-package com.ebsco.platform.infrastructure.configuration;
+package com.ebsco.platform.configuration;
 
-import com.ebsco.platform.infrastructure.utility.FileUtils;
-import com.ebsco.platform.infrastructure.utility.PropertiesUtils;
+import com.ebsco.platform.utils.FileUtils;
+import com.ebsco.platform.utils.PropertiesUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -1,23 +1,21 @@
-package com.ebsco.platform.infrastructure.core.awsclients;
+package com.ebsco.platform.core.awsclientholders;
 
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.lambda.AWSLambda;
 import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
 import com.amazonaws.services.lambda.model.*;
 import com.amazonaws.services.lambda.model.Runtime;
-import com.ebsco.platform.infrastructure.configuration.ConfigConstants;
-import com.ebsco.platform.infrastructure.configuration.PropertiesReader;
-import com.ebsco.platform.infrastructure.utility.FileUtils;
+import com.ebsco.platform.configuration.ConfigConstants;
+import com.ebsco.platform.configuration.PropertiesReader;
+import com.ebsco.platform.infrastructure.inventoringlambda.Application;
+import com.ebsco.platform.utils.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
 
-public class AmazonLambdaClient implements IFaceAWSClient {
+public class AmazonLambdaClientHolder implements IFaceAWSClientHolder {
 
 public static final int LAMBDA_MEMORY_SIZE = 2048;
 public static final int LAMBDA_TIMEOUT = 20;
@@ -25,11 +23,15 @@ public static final String LAMBDA_INVOKE_FUNCTION = "lambda:InvokeFunction";
 public static final String S_3_AMAZONAWS_COM = "s3.amazonaws.com";
 private AWSLambda awsLambdaClient;
 
-public AmazonLambdaClient(AWSLambda awsLambdaClient) {
+public AmazonLambdaClientHolder(AWSLambda awsLambdaClient) {
 	this.awsLambdaClient = awsLambdaClient;
 }
 
-public AmazonLambdaClient() {
+public AWSLambda getAwsLambdaClient() {
+	return awsLambdaClient;
+}
+
+public AmazonLambdaClientHolder() {
 	PropertiesReader reader = PropertiesReader.getInstance();
 
 	String reg = reader.getProperty(ConfigConstants.P_NAME_AWS_REGION, ConfigConstants.DEFAULT_REGION.getName());
@@ -41,7 +43,7 @@ public AmazonLambdaClient() {
 			.build();
 }
 
-public AmazonLambdaClient(Regions region) {
+public AmazonLambdaClientHolder(Regions region) {
 	this(AWSLambdaClientBuilder.standard()
 			.withRegion(region)
 			.build());
@@ -77,10 +79,13 @@ public AddPermissionResult addPermission(String functionName, String principal, 
  * @return
  * @throws IOException
  */
-public CreateFunctionResult createFunction(String functionName, Path pathToZip, String handler, String role) throws IOException {
+public CreateFunctionResult createFunctionWithTableNameAsEnvironmentVariable(String functionName, Path pathToZip, String handler,
+																			 String role, String linkedTableName) throws IOException {
 	CreateFunctionRequest request = new CreateFunctionRequest();
 	request.withMemorySize(LAMBDA_MEMORY_SIZE);
 	request.withTimeout(LAMBDA_TIMEOUT);
+	request.withEnvironment(new Environment().addVariablesEntry(Application.DYNAMODB_TABLE,
+			linkedTableName));
 	FunctionCode code = new FunctionCode();
 	code
 			.withZipFile(FileUtils.bytesFromFileToByteBuffer(pathToZip));
@@ -92,11 +97,15 @@ public CreateFunctionResult createFunction(String functionName, Path pathToZip, 
 			.withCode(code);
 
 
-/*	ByteBuffer buffer = new ByteB
-code.setZipFile(ByteBuffer b)*/
-	;
-	return awsLambdaClient.createFunction(request);
+
+	CreateFunctionResult function = awsLambdaClient.createFunction(request);
+
+	/*	Give s3 permisson to invoke Lambda Function	*/
+	addPermissionForS3ToInvokeLambda(functionName);
+
+	return function;
 }
+
 
 
 public GetFunctionResult getFunction(String name) {

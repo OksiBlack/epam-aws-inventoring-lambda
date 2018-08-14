@@ -1,4 +1,4 @@
-package com.ebsco.platform.infrastructure.utility;
+package com.ebsco.platform.utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

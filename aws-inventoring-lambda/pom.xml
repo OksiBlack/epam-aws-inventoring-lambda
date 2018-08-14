@@ -8,7 +8,7 @@
 	<artifactId>inventoringlambda</artifactId>
 	<version>1.0-SNAPSHOT</version>
 
-	<name>inventoringlambda</name>
+	<name>aws-inventoring-lambda</name>
 
 
 	<properties>

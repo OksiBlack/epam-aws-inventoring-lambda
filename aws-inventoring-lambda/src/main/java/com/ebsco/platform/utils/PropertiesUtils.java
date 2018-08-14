@@ -1,4 +1,7 @@
-package com.ebsco.platform.infrastructure.utility;
+package com.ebsco.platform.utils;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -7,6 +10,7 @@ import java.util.Objects;
 import java.util.Properties;
 
 public class PropertiesUtils {
+	public static final Logger logger = LogManager.getLogger();
 /**
  * @param props
  * @param propertyName
@@ -20,7 +24,7 @@ public static boolean setSystemPropertyIfPresent(Properties props, String proper
 	if (property != null) {
 		System.setProperty(propertyName, property);
 		isChanged = true;
-		System.out.printf("%s set from properties.%n", propertyName);
+		logger.debug("{} set from properties.\n", propertyName);
 
 		assert System.getProperty(propertyName)
 				.equals(property) : "System property not set.";
