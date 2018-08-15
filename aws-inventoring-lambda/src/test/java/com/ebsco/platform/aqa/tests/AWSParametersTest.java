@@ -14,6 +14,7 @@ import com.ebsco.platform.utils.FileUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,11 +36,11 @@ public void testDeleteNotEmptyBucket() throws IOException {
 
 	s3ClientHolder.createBucketIfNotExists(unique);
 
-	Path sampleFile = MiscTestHelperUtils.createSampleFile("aws-inventoring-lambda-temp", ".txt", 300);
-	String expected = "The bucketName you tried to delete is not empty";
+	File sampleFile = MiscTestHelperUtils.createSampleFile("aws-inventoring-lambda-temp", ".txt", 300);
+	String expected = "The bucket you tried to delete is not empty";
 
 	s3ClientHolder.putFileObjectToBucket(unique, sampleFile.toString(), sampleFile);
-	logger.info("Trying to delete not empty bucketName. Exception expected.");
+	logger.info("Trying to delete not empty bucket. Exception expected.");
 	AmazonS3Exception ex = assertThrows(AmazonS3Exception.class, () -> {
 		s3ClientHolder.deleteBucket(unique);
 
@@ -50,7 +51,7 @@ public void testDeleteNotEmptyBucket() throws IOException {
 
 }
 
-@DisplayName("Create new bucketName. Success")
+@DisplayName("Create new bucket. Success")
 @Test
 public void testCreateBucketSuccess() {
 
@@ -146,7 +147,7 @@ void testInvalidBucketNameSpecified() {
 
 }
 
-@DisplayName("Create bucketName. Null as bucketName name. Exception expected")
+@DisplayName("Create bucket. Null as bucketName name. Exception expected")
 @Test
 void testNullBucketName() {
 	String bName = null;
@@ -256,6 +257,7 @@ public void testCreateTableSuccess() {
 	logger.info(createTableResult);
 
 	assertTrue(dynamoDBClientHolder.isTableExists(tableNameRandom));
+
 
 }
 

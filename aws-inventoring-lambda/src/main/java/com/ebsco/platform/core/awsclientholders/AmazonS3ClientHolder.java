@@ -10,8 +10,7 @@ import com.ebsco.platform.utils.Formatter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
-import java.nio.file.Path;
+import java.io.File;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
@@ -145,15 +144,14 @@ public Bucket getBucket(String bucketName) {
 }
 
 /**
+ *
  * @param bucketName
  * @param key
  * @param path
- * @throws IOException
  */
-public void putFileObjectToBucket(String bucketName, String key, Path path) throws IOException {
+public void putFileObjectToBucket(String bucketName, String key, File path) {
 
-	Path path1 = path.toRealPath();
-	amazonS3.putObject(new PutObjectRequest(bucketName, key, path1.toFile()));
+	amazonS3.putObject(new PutObjectRequest(bucketName, key, path));
 
 }
 
@@ -184,11 +182,16 @@ public void deleteObject(String bucketName, String key) {
 	Formatter.getLogger().info("Deleting an object\n");
 	amazonS3.deleteObject(bucketName, key);
 }
-//TODO verify
-public void deleteObject(DeleteObjectRequest deleteObjectRequest, String bucketName, String key
-) {
-	Formatter.getLogger().info("Deleting an object\n");
-	amazonS3.deleteObject(new DeleteObjectRequest(bucketName, key));
+
+/**
+ *
+ * @param bucket
+ * @param key
+ * @return
+ */
+public boolean doesObjectExists(String bucket, String key) {
+	return amazonS3
+			.doesObjectExist(bucket, key);
 }
 
 /**
@@ -199,6 +202,12 @@ public void deleteBucket(String bucketName) {
 	Formatter.getLogger().info("Deleting a bucket\n");
 	amazonS3.deleteBucket(bucketName);
 }
+
+/**
+ *
+ * @param bucketName
+ * @param isVersioned
+ */
 public void deleteNotEmptyBucket(String bucketName, boolean isVersioned) {
 
 	// Delete all objects from the bucket. This is sufficient
@@ -246,7 +255,9 @@ public void deleteNotEmptyBucket(String bucketName, boolean isVersioned) {
 	amazonS3.deleteBucket(bucketName);
 }
 
-
+/**
+ *
+ */
 
 @Override
 public void shutdown() {

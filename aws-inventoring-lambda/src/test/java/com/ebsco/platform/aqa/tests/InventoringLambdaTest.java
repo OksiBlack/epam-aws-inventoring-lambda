@@ -10,7 +10,8 @@ import com.ebsco.platform.core.awsclientholders.IFaceAWSClientHolder;
 import org.junit.jupiter.api.AfterAll;
 
 
-
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 public abstract class InventoringLambdaTest {
 

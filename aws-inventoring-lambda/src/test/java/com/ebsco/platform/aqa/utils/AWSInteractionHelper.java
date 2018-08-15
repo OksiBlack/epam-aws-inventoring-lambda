@@ -22,7 +22,7 @@ public static void createAndUploadSampleFile(AmazonFileTransferHelper fileTransf
 											 String fileSuffix) throws IOException {
 	File file1 = null;
 	try {
-		file1 = MiscTestHelperUtils.createSampleFile(filePrefix, fileSuffix, repeatNum).toFile();
+		file1 = MiscTestHelperUtils.createSampleFile(filePrefix, fileSuffix, repeatNum);
 
 
 		try {

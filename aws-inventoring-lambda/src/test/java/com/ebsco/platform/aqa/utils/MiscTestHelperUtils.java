@@ -12,17 +12,15 @@ import java.util.stream.IntStream;
 public class MiscTestHelperUtils {
 
 /**
- *
  * @param filePrefix
  * @param fileSuffix
  * @param repeatNum
  * @return
  * @throws IOException
  */
-public static Path createSampleFile(String filePrefix,
+public static File createSampleFile(String filePrefix,
 									String fileSuffix, int repeatNum) throws IOException {
 	Path file = Files.createTempFile(filePrefix, fileSuffix);
-
 
 	try (Writer writer = Files.newBufferedWriter(file)) {
 		for (int i = 0; i < repeatNum; i++) {
@@ -48,11 +46,9 @@ public static Path createSampleFile(String filePrefix,
 					.toString());
 			writer.write(chars);
 
-
 		}
 	}
-	return file;
+	return file.toRealPath().toFile();
 }
-
 
 }
