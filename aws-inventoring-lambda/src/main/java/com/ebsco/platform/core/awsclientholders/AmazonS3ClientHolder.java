@@ -5,8 +5,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.*;
 import com.ebsco.platform.configuration.ConfigConstants;
-import com.ebsco.platform.configuration.PropertiesReader;
-import com.ebsco.platform.utils.Log4j2BasedLogger;
+import com.ebsco.platform.configuration.ConfigPropertiesReader;
+import com.ebsco.platform.utils.Formatter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,7 +30,7 @@ public static final Logger logger = LogManager.getLogger();
 
 public AmazonS3ClientHolder() {
 
-	PropertiesReader reader = PropertiesReader.getInstance();
+	ConfigPropertiesReader reader = ConfigPropertiesReader.getInstance();
 
 	String reg = reader.getProperty(ConfigConstants.P_NAME_AWS_REGION, ConfigConstants.DEFAULT_REGION.getName());
 	Regions regions = Regions.fromName(reg);
@@ -47,6 +47,23 @@ public AmazonS3ClientHolder(AmazonS3 client) {
 
 }
 
+/**
+ *
+ * @return
+ */
+public List<Bucket> listBuckets(){
+	return amazonS3.listBuckets();
+
+
+}
+
+/**
+ *
+ * @param buck
+ */
+public void listObjects(String buck){
+	amazonS3.listObjectsV2( buck);
+}
 /**
  *
  * @param regions
@@ -147,10 +164,10 @@ public void putFileObjectToBucket(String bucketName, String key, Path path) thro
  */
 public S3Object downloadObjectFromBucket(String bucketName, String key) {
 
-	Log4j2BasedLogger.getLogger().info("Downloading an object");
+	Formatter.getLogger().info("Downloading an object");
 	S3Object object = amazonS3.getObject(new GetObjectRequest(bucketName, key));
-	Log4j2BasedLogger.getLogger().info("Content-Type: " + object.getObjectMetadata().getContentType());
-	Log4j2BasedLogger.getLogger().info(object.getObjectContent());
+	Formatter.getLogger().info("Content-Type: " + object.getObjectMetadata().getContentType());
+	Formatter.getLogger().info(object.getObjectContent());
 	return object;
 }
 
@@ -164,13 +181,13 @@ public S3Object downloadObjectFromBucket(String bucketName, String key) {
 
 public void deleteObject(String bucketName, String key) {
 
-	Log4j2BasedLogger.getLogger().info("Deleting an object\n");
+	Formatter.getLogger().info("Deleting an object\n");
 	amazonS3.deleteObject(bucketName, key);
 }
 //TODO verify
 public void deleteObject(DeleteObjectRequest deleteObjectRequest, String bucketName, String key
 ) {
-	Log4j2BasedLogger.getLogger().info("Deleting an object\n");
+	Formatter.getLogger().info("Deleting an object\n");
 	amazonS3.deleteObject(new DeleteObjectRequest(bucketName, key));
 }
 
@@ -179,7 +196,7 @@ public void deleteObject(DeleteObjectRequest deleteObjectRequest, String bucketN
  */
 public void deleteBucket(String bucketName) {
 
-	Log4j2BasedLogger.getLogger().info("Deleting a bucket\n");
+	Formatter.getLogger().info("Deleting a bucket\n");
 	amazonS3.deleteBucket(bucketName);
 }
 public void deleteNotEmptyBucket(String bucketName, boolean isVersioned) {
@@ -225,7 +242,7 @@ public void deleteNotEmptyBucket(String bucketName, boolean isVersioned) {
 		}
 	}
 
-	Log4j2BasedLogger.getLogger().info("Deleting a bucket\n");
+	Formatter.getLogger().info("Deleting a bucket\n");
 	amazonS3.deleteBucket(bucketName);
 }
 

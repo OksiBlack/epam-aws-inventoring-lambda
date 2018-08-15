@@ -12,14 +12,14 @@ import java.nio.file.Paths;
 import java.util.Properties;
 
 
-public class PropertiesReader {
-private static PropertiesReader reader = new PropertiesReader();
+public class ConfigPropertiesReader {
+private static ConfigPropertiesReader reader = new ConfigPropertiesReader();
 
 private Properties properties;
 public static final Logger logger = LogManager.getLogger();
 
 
-private PropertiesReader() {
+private ConfigPropertiesReader() {
 	String property = System.getProperty(ConfigConstants.SYS_P_NAME_CONFIG_FILE_NAME,
 			ConfigConstants.DEFAULT_CONFIG_FILE_NAME);
 	try {
@@ -39,7 +39,7 @@ private PropertiesReader() {
 /**
  * @return
  */
-public static PropertiesReader getInstance() {
+public static ConfigPropertiesReader getInstance() {
 	return reader;
 }
 

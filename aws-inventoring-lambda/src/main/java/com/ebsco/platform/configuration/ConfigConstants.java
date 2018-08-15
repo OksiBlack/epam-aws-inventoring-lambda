@@ -30,6 +30,7 @@ public static final String DEFAULT_LAMBDA_HANDLER = "com.ebsco.platform.infrastr
 public static final String DEFAULT_DYNAMODB_TABLE_NAME = IngestionLambda.DEFAULT_DYNAMODB_TABLE_NAME;
 
 public static final String DEFAULT_BUCKET_NAME = "us-east-1.bucket.155";
+public static final String DEFAULT_UPLOAD_FILE_NAME = "log4j2.xml";
 
 public static final String ZIP_EXTENSION = ".zip";
 

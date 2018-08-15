@@ -11,7 +11,7 @@ import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.ebsco.platform.configuration.ConfigConstants;
-import com.ebsco.platform.configuration.PropertiesReader;
+import com.ebsco.platform.configuration.ConfigPropertiesReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -42,9 +42,9 @@ public AmazonDynamoDBClientHolder(Regions regions) {
 }
 
 public AmazonDynamoDBClientHolder() {
-	PropertiesReader reader = null;
+	ConfigPropertiesReader reader = null;
 
-	reader = PropertiesReader.getInstance();
+	reader = ConfigPropertiesReader.getInstance();
 
 
 	String reg = reader.getProperty(ConfigConstants.P_NAME_AWS_REGION, ConfigConstants.DEFAULT_REGION.getName());
@@ -249,7 +249,6 @@ public boolean isTableExists(String tableName){
 		res = true;
 	}
 
-	System.out.println(tableNames);
 
 	return res;
 }
@@ -299,7 +298,7 @@ public ItemCollection<QueryOutcome> queryWithGlobalIndex(String tName, String in
 	ItemCollection<QueryOutcome> items = index.query(spec);
 	Iterator<Item> iter = items.iterator();
 	while (iter.hasNext()) {
-		System.out.println(iter.next()
+		logger.debug(iter.next()
 				.toJSONPretty());
 	}
 
@@ -321,7 +320,7 @@ public ItemCollection queryByPrimaryKey(Table table, String keyName, Object item
 
 	ItemCollection<QueryOutcome> items = table.query(querySpec);
 	for (Item item : items) {
-		System.out.println(item);
+		logger.debug(item.toJSONPretty());
 	}
 	return items;
 }

@@ -6,7 +6,7 @@ import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
 import com.amazonaws.services.lambda.model.*;
 import com.amazonaws.services.lambda.model.Runtime;
 import com.ebsco.platform.configuration.ConfigConstants;
-import com.ebsco.platform.configuration.PropertiesReader;
+import com.ebsco.platform.configuration.ConfigPropertiesReader;
 import com.ebsco.platform.infrastructure.inventoringlambda.Application;
 import com.ebsco.platform.utils.FileUtils;
 
@@ -32,7 +32,7 @@ public AWSLambda getAwsLambdaClient() {
 }
 
 public AmazonLambdaClientHolder() {
-	PropertiesReader reader = PropertiesReader.getInstance();
+	ConfigPropertiesReader reader = ConfigPropertiesReader.getInstance();
 
 	String reg = reader.getProperty(ConfigConstants.P_NAME_AWS_REGION, ConfigConstants.DEFAULT_REGION.getName());
 	Regions regions = Regions.fromName(reg);

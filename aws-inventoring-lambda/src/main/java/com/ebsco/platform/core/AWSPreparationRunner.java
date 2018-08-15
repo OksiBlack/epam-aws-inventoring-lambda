@@ -7,7 +7,7 @@ import com.amazonaws.services.lambda.model.CreateFunctionResult;
 import com.amazonaws.services.lambda.model.UpdateFunctionCodeResult;
 import com.ebsco.platform.core.awsclientholders.*;
 import com.ebsco.platform.configuration.ConfigConstants;
-import com.ebsco.platform.configuration.PropertiesReader;
+import com.ebsco.platform.configuration.ConfigPropertiesReader;
 import com.ebsco.platform.core.awsclientholders.AmazonLambdaClientHolder;
 import com.ebsco.platform.core.awsclientholders.AmazonS3ClientHolder;
 import com.ebsco.platform.utils.FileUtils;
@@ -27,7 +27,7 @@ public static void main(String[] args) {
 
 	try {
 
-		PropertiesReader reader = PropertiesReader.getInstance();
+		ConfigPropertiesReader reader = ConfigPropertiesReader.getInstance();
 
 		Properties properties = reader.getProperties();
 
