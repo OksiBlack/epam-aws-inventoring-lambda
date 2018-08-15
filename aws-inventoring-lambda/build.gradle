@@ -151,3 +151,7 @@ task fatTestJar(type: Jar) {
 
 build.dependsOn fatTestJar
 
+task(runMain, dependsOn: 'classes', type: JavaExec) {
+    main = 'com.ebsco.platform.core.AWSPreparationRunner'
+    classpath = sourceSets.main.runtimeClasspath
+}
