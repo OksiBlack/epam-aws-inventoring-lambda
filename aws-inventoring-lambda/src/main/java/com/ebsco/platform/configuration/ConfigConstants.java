@@ -16,7 +16,7 @@ public static final String P_NAME_AWS_BUCKET_NAME = "aws.bucketName";
 
 public static final String P_NAME_AWS_LAMBDA_FUNCTION_NAME = "aws.lambda.functionName";
 
-public static final String P_NAME_AWS_UPLOADED_FILE_NAME="aws.uploadedFileName";
+public static final String P_NAME_FILE_NAME_TO_UPLOAD ="aws.uploadedFileName";
 
 public static final String P_NAME_TABLE_NAME = "aws.tableName";
 public static final String P_NAME_AWS_REGION = "aws.region";

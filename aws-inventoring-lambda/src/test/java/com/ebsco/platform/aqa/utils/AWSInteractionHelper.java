@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import static com.ebsco.platform.core.awsclientholders.AmazonDynamoDBClientHolder.*;
 
@@ -40,22 +41,34 @@ public static void createAndUploadSampleFile(AmazonFileTransferHelper fileTransf
 	}
 }
 
-
+/**
+ *
+ * @param tName
+ * @param path
+ * @param dynamoDBClientHolder
+ * @return
+ * @throws IOException
+ */
+public static ItemCollection<QueryOutcome> queryWithFilePathGlobalIndex(String tName, Path path,
+																		AmazonDynamoDBClientHolder dynamoDBClientHolder) throws IOException {
+	return queryWithFilePathGlobalIndex(tName, path.toFile(), dynamoDBClientHolder);
+}
 
 /**
  * @param tName
  * @param path
  * @return
  */
-public static ItemCollection<QueryOutcome> queryWithFilePathGlobalIndex(String tName, String path,
-																		AmazonDynamoDBClientHolder dynamoDBClientHolder) {
+public static ItemCollection<QueryOutcome> queryWithFilePathGlobalIndex(String tName, File path,
+																		AmazonDynamoDBClientHolder dynamoDBClientHolder) throws IOException {
 
 	NameMap nameMap = null;
 	String fPath = ":fPath";
 	String keyConditionExs = FILE_PATH + " = " + fPath;
 
+	String pathKey = MiscTestHelperUtils.fileToObjectKey(path);
 	ValueMap valueMap1 = new ValueMap();
-	valueMap1.put(fPath, path);
+	valueMap1.put(fPath, pathKey);
 
 
 	return dynamoDBClientHolder.queryWithGlobalIndex(tName, FILE_PATH_INDEX, keyConditionExs, nameMap,

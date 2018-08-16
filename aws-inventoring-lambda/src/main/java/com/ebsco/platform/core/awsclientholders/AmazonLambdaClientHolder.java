@@ -85,7 +85,7 @@ public CreateFunctionResult createFunctionWithTableNameAsEnvironmentVariable(Str
 	request.withMemorySize(LAMBDA_MEMORY_SIZE);
 	request.withTimeout(LAMBDA_TIMEOUT);
 	request.withEnvironment(new Environment().addVariablesEntry(Application.DYNAMODB_TABLE,
-			linkedTableName));
+			linkedTableName).addVariablesEntry(Application.ALLOWED_DIRECTORIES, Application.ALL_DIRECTORIES));
 	FunctionCode code = new FunctionCode();
 	code
 			.withZipFile(FileUtils.bytesFromFileToByteBuffer(pathToZip));

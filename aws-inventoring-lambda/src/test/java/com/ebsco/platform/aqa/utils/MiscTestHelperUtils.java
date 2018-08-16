@@ -19,7 +19,26 @@ public class MiscTestHelperUtils {
  */
 public static File createSampleFile(String filePrefix,
 									String fileSuffix, int repeatNum) throws IOException {
-	Path file = Files.createTempFile(filePrefix, fileSuffix);
+	return  createSampleFile(null, filePrefix, fileSuffix, repeatNum);
+}
+
+/**
+ *
+ * @param dest
+ * @param filePrefix
+ * @param fileSuffix
+ * @param repeatNum
+ * @return
+ * @throws IOException
+ */
+public static File createSampleFile(Path dest, String filePrefix,
+									String fileSuffix, int repeatNum) throws IOException {
+	Path file;
+	if(dest==null){
+		file =Files.createTempFile( filePrefix, fileSuffix);
+	}else{
+		file = Files.createTempFile(dest, filePrefix, fileSuffix);
+	}
 
 	try (Writer writer = Files.newBufferedWriter(file)) {
 		for (int i = 0; i < repeatNum; i++) {
