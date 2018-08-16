@@ -57,7 +57,7 @@ public void testCreateBucketSuccess() {
 
 	if (s3ClientHolder.doesBucketExists(bucketName)) {
 
-		s3ClientHolder.deleteBucket(bucketName);
+		s3ClientHolder.deleteNotEmptyBucket(bucketName, false);
 		assertFalse(s3ClientHolder.doesBucketExists(bucketName), "Bucket should be deleted by now.");
 	}
 
@@ -152,7 +152,7 @@ void testInvalidBucketNameSpecified() {
 void testNullBucketName() {
 	String bName = null;
 
-	String message = "The bucketName name parameter must be specified when creating a bucketName";
+	String message = "The bucket name parameter must be specified when creating a bucket";
 	logger.info(message);
 
 	IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
@@ -171,7 +171,7 @@ void testNullBucketName() {
 @Test
 public void testCreateTableInvalidInput() {
 
-	logger.info("Passing invalid bucketName names to create bucketName request. Exceptions expected.");
+	logger.info("Passing invalid bucket names to create bucket request. Exceptions expected.");
 	assertAll(
 
 			() -> {
@@ -183,7 +183,7 @@ public void testCreateTableInvalidInput() {
 				logger.info("Actual exception: {}", ex.getMessage());
 
 				assertTrue(ex.getMessage()
-						.contains(message));
+						.contains(message), ex.getMessage());
 
 			},
 
@@ -195,7 +195,7 @@ public void testCreateTableInvalidInput() {
 				logger.info("Actual exception: {}", ex.getMessage());
 
 				assertTrue(ex.getMessage()
-						.contains(message));
+						.contains(message), ex.getMessage());
 
 			},
 
@@ -206,17 +206,7 @@ public void testCreateTableInvalidInput() {
 				logger.info("Actual exception: {}", ex.getMessage());
 
 				assertTrue(ex.getMessage()
-						.contains(message));
-			},
-
-			() -> {
-				String message = "Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+";
-				logger.info(message);
-				AmazonDynamoDBException ex = assertThrows(AmazonDynamoDBException.class, () -> dynamoDBClientHolder.createTableForIngestionLambda(null), message);
-				logger.info("Actual exception: {}", ex.getMessage());
-
-				assertTrue(ex.getMessage()
-						.contains(message));
+						.contains(message), ex.getMessage());
 			}
 
 	);
@@ -239,7 +229,7 @@ void testNullTableName() {
 	logger.info("Actual exception: {}", ex.getMessage());
 
 	assertTrue(ex.getMessage()
-			.contains(message));
+			.contains(message), ex.getMessage());
 
 }
 
@@ -256,7 +246,7 @@ public void testCreateTableSuccess() {
 
 	logger.info(createTableResult);
 
-	assertTrue(dynamoDBClientHolder.isTableExists(tableNameRandom));
+	assertTrue(dynamoDBClientHolder.isTableExists(tableNameRandom), "Table should exist");
 
 
 }
@@ -285,7 +275,7 @@ public void testCreateTableAlreadyExists() {
 	logger.info("Actual exception: {}", ex.getMessage());
 
 	assertTrue(ex.getMessage()
-			.contains(expected));
+			.contains(expected), ex.getMessage());
 
 }
 
@@ -322,7 +312,7 @@ public void testCreateFunctionInvalidFunctionCodeParamsAndZip() throws IOExcepti
 	logger.info("Actual exception: {}", ex.getMessage());
 
 	assertTrue(ex.getMessage()
-			.contains(expected));
+			.contains(expected), ex.getMessage());
 
 }
 
@@ -338,13 +328,13 @@ public void testCreateFunctionSuccess() throws IOException {
 		DeleteFunctionResult deleteFunctionResult = lambdaClientHolder.deleteFunction(funcName);
 		logger.info(deleteFunctionResult);
 
-		assertFalse(lambdaClientHolder.isFunctionAlreadyExists(funcName));
+		assertFalse(lambdaClientHolder.isFunctionAlreadyExists(funcName), "Function should be deleted");
 	}
 	CreateFunctionResult functionWithTableNameAsEnvironmentVariable = lambdaClientHolder.createFunctionWithTableNameAsEnvironmentVariable(funcName, path, handlerName, lambdaRole, tableName);
 
 	logger.info(functionWithTableNameAsEnvironmentVariable);
 
-	assertTrue(lambdaClientHolder.isFunctionAlreadyExists(funcName));
+	assertTrue(lambdaClientHolder.isFunctionAlreadyExists(funcName), "Function should exist");
 
 }
 
@@ -371,7 +361,7 @@ public void testCreateFunctionAlreadyExists() throws IOException {
 	logger.info("Actual exception: {}", ex.getMessage());
 
 	assertTrue(ex.getMessage()
-			.contains(expected));
+			.contains(expected), ex.getMessage());
 
 }
 
@@ -392,7 +382,7 @@ public void testCreateFunctionNotInvalidZip() throws IOException {
 	logger.info("Actual exception: {}", ex.getMessage());
 
 	assertTrue(ex.getMessage()
-			.contains(expected));
+			.contains(expected), ex.getMessage());
 
 }
 
@@ -415,7 +405,7 @@ public void testCreateFunctionRoleNameIllegal() throws IOException {
 	logger.info("Actual exception: {}", ex.getMessage());
 
 	assertTrue(ex.getMessage()
-			.contains(expected));
+			.contains(expected), ex.getMessage());
 
 }
 
@@ -441,7 +431,7 @@ public void testCreateFunctionNotExistingRole() throws IOException {
 	logger.info("Actual exception: {}", ex.getMessage());
 
 	assertTrue(ex.getMessage()
-			.contains(expected));
+			.contains(expected), ex.getMessage());
 
 }
 
@@ -465,7 +455,7 @@ public void testCreateFunctionInvalidParams() throws IOException {
 				logger.info("Actual exception: {}", ex.getMessage());
 
 				assertTrue(ex.getMessage()
-						.contains(errorTemplate));
+						.contains(errorTemplate), ex.getMessage());
 			},
 
 			() -> {
@@ -476,7 +466,7 @@ public void testCreateFunctionInvalidParams() throws IOException {
 				logger.info("Actual exception: {}", ex.getMessage());
 
 				assertTrue(ex.getMessage()
-						.contains(errorTemplate));
+						.contains(errorTemplate), ex.getMessage());
 			},
 
 			() -> {
@@ -486,7 +476,7 @@ public void testCreateFunctionInvalidParams() throws IOException {
 				logger.info("Actual exception: {}", ex.getMessage());
 
 				assertTrue(ex.getMessage()
-						.contains(errorTemplate));
+						.contains(errorTemplate), ex.getMessage());
 			},
 
 			() -> {
@@ -496,7 +486,7 @@ public void testCreateFunctionInvalidParams() throws IOException {
 				logger.info("Actual exception: {}", ex.getMessage());
 
 				assertTrue(ex.getMessage()
-						.contains(errorTemplate));
+						.contains(errorTemplate), ex.getMessage());
 			},
 
 			() -> assertThrows(AWSLambdaException.class, () -> lambdaClientHolder.createFunctionWithTableNameAsEnvironmentVariable("end-with-dash-", path, handlerName, lambdaRole, tableName)),
@@ -508,7 +498,7 @@ public void testCreateFunctionInvalidParams() throws IOException {
 				logger.info("Actual exception: {}", ex.getMessage());
 
 				assertTrue(ex.getMessage()
-						.contains(errorTemplate));
+						.contains(errorTemplate), ex.getMessage());
 			});
 }
 }
