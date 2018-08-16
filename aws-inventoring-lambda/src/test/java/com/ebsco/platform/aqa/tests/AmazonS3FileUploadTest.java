@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import static com.ebsco.platform.core.awsclientholders.AmazonDynamoDBClientHolder.ORIGIN_TIME_STAMP;
 import static com.ebsco.platform.core.awsclientholders.AmazonDynamoDBClientHolder.PACKAGE_ID;
 import static com.ebsco.platform.core.awsclientholders.AmazonDynamoDBClientHolder.logger;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AmazonS3FileUploadTest extends InventoringLambdaTest {
@@ -127,28 +128,28 @@ void testUploadFileList() throws IOException, InterruptedException {
  * @throws InterruptedException
  */
 @Test
-void uploadTempFile() throws IOException, InterruptedException {
+void testLambdaTriggeredOnFileUpload() throws IOException, InterruptedException {
 
 	AmazonFileTransferHelper h = new AmazonFileTransferHelper(s3ClientHolder.getAmazonS3());
 	File file = null;
 	try {
-		file = MiscTestHelperUtils.createSampleFile("aws-test", ".txt", 20);
+		file = MiscTestHelperUtils.createSampleFile("aws-test", ".txt", 10);
 
 		ItemCollection<QueryOutcome> items = AWSInteractionHelper.queryWithFilePathGlobalIndex(tableName, file.toString(), dynamoDBClientHolder);
 		AtomicInteger integerBefore = new AtomicInteger();
 		int itemCount1 = dynamoDBClientHolder.getItemCount(tableName);
 
 		Upload upload = h.uploadFile(bucketName, null, file);
-		System.out.println(file);
 
 		ItemCollection<QueryOutcome> items2 = AWSInteractionHelper.queryWithFilePathGlobalIndex(tableName, file.toString(), dynamoDBClientHolder);
 		AtomicInteger integer= new AtomicInteger();
-
+logger.info("1: {}", itemCount1);
 		int itemCount2 = dynamoDBClientHolder.getItemCount(tableName);
-
+		logger.info("2: {}", itemCount2);
+assertEquals(itemCount1+1, itemCount2);
 	} finally {
 		if (file != null) {
-	//		file.deleteOnExit();
+			file.deleteOnExit();
 		}
 
 	}
@@ -160,6 +161,7 @@ void uploadTempFile() throws IOException, InterruptedException {
  * @throws IOException
  * @throws InterruptedException
  */
+@Test
 void uploadTempFileToS3AndDelete() throws IOException, InterruptedException {
 
 	AmazonFileTransferHelper h = new AmazonFileTransferHelper(s3ClientHolder.getAmazonS3());
@@ -171,17 +173,18 @@ void uploadTempFileToS3AndDelete() throws IOException, InterruptedException {
 
 		logger.info("File uploaded: {}", upload);
 
-		assertTrue(s3ClientHolder.doesObjectExists(bucketName, file.toString()));
+		assertTrue(s3ClientHolder.doesObjectExists(bucketName, file.toString().substring(1)));
 
-		s3ClientHolder.deleteObject(bucketName, file.toString());
+		s3ClientHolder.deleteObject(bucketName, file.toString().substring(1));
 
-		boolean b = s3ClientHolder.doesObjectExists(bucketName, file.toString());
+		boolean b = s3ClientHolder.doesObjectExists(bucketName, file.toString().substring(1));
 
 		Assertions.assertFalse(b);
 	} finally {
 		if (file != null) {
 			file.deleteOnExit();
 		}
+
 
 	}
 
@@ -214,7 +217,6 @@ void uploadBigFile() throws IOException, InterruptedException {
 	itemsAfter.forEach((i) -> integerAfter.incrementAndGet());
 	//	logger.info("Items count after: {}. Items: {}",integerAfter, itemsAfter);
 
-	System.out.println();
 
 	List<Map<String, AttributeValue>> maps = dynamoDBClientHolder.scanTable(tableName);
 
@@ -222,7 +224,6 @@ void uploadBigFile() throws IOException, InterruptedException {
 
 //	List<Map<String, AttributeValue>> mapAfter = dynamoDBClientHolder.scanTable(tableName);
 
-	System.out.println();
 }
 
 @Test

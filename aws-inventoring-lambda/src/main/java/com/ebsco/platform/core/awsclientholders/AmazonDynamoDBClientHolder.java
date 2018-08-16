@@ -238,7 +238,7 @@ public boolean createTableIfNotExists(String tableName) {
 
 	List<String> tableNames = listTables().getTableNames();
 	if (tableNames.contains(tableName)) {
-		return true;
+		return false;
 	} else {
 		createTableForIngestionLambda(tableName);
 		return true;

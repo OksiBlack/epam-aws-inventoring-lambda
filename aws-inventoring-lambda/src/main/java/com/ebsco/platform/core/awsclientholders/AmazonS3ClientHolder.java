@@ -11,11 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.List;
-
-
+import java.util.*;
 
 public class AmazonS3ClientHolder implements IFaceAWSClientHolder {
 public static final String S_3_OBJECT_CREATED_ALL = "s3:ObjectCreated:*";
@@ -24,6 +20,7 @@ private AmazonS3 amazonS3;
 public AmazonS3 getAmazonS3() {
 	return amazonS3;
 }
+public static final String DASH ="-";
 
 public static final Logger logger = LogManager.getLogger();
 
@@ -109,24 +106,68 @@ public Bucket createNewBucket(String bucketName) {
 }
 
 /**
- *
- * @param bucketName
+ *  @param bucketName
  * @param lambdaFuncArn
  */
-public void addBucketNotificationConfiguration(String bucketName,
-											   String lambdaFuncArn){
+public void setBucketNotificationConfigurationForFunction(String bucketName,
+														  String lambdaFuncArn, EnumSet<S3Event> events){
+
 
 	BucketNotificationConfiguration configuration = new BucketNotificationConfiguration();
-	configuration.addConfiguration(bucketName+System.currentTimeMillis(), new LambdaConfiguration(lambdaFuncArn,
-			EnumSet.of(S3Event.ObjectCreated)));
+	configuration.addConfiguration(bucketName+DASH+System.currentTimeMillis(), new LambdaConfiguration(lambdaFuncArn,
+			events));
 
 	SetBucketNotificationConfigurationRequest request = new SetBucketNotificationConfigurationRequest(
 			bucketName, configuration);
 	amazonS3.setBucketNotificationConfiguration(request);
 
-	//amazonS3.setBucketNotificationConfiguration(bucketName, configuration);
 
 }
+
+/**
+ *
+ * @param bucketName
+ * @param notifName
+ */
+public void removeBucketNotificationConfiguration(String bucketName,
+											   String notifName) {
+
+	BucketNotificationConfiguration bucketNotificationConfiguration = amazonS3.getBucketNotificationConfiguration(bucketName);
+
+	NotificationConfiguration notificationConfiguration = bucketNotificationConfiguration.removeConfiguration(notifName);
+
+
+
+	SetBucketNotificationConfigurationRequest request = new SetBucketNotificationConfigurationRequest(
+			bucketName, 	new BucketNotificationConfiguration(bucketName,notificationConfiguration));
+
+	amazonS3.setBucketNotificationConfiguration(request);
+
+
+}
+
+/**
+ *
+ * @param bucketName
+ */
+public void removeAllBucketNotifications(String bucketName){
+
+
+	BucketNotificationConfiguration bucketNotificationConfiguration = new BucketNotificationConfiguration();
+
+	/*Map<String, NotificationConfiguration> configurations = new HashMap<>();
+
+	bucketNotificationConfiguration.setConfigurations(configurations);
+
+*/
+
+	SetBucketNotificationConfigurationRequest request = new SetBucketNotificationConfigurationRequest(
+			bucketName, bucketNotificationConfiguration);
+	amazonS3.setBucketNotificationConfiguration(request);
+
+
+}
+
 /**
  * @param bucketName
  * @return

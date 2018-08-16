@@ -18,7 +18,6 @@ import org.joda.time.DateTime;
 
 public class IngestionLambda extends Application {
 public static final String DEFAULT_DYNAMODB_TABLE_NAME = "platform.infrastructure.dynamodb-catalog.s3rawdocument";
-public static final String KEY = "packageId";
 public static final String PATH = "filePath";
 public static final String SIZE = "fileSize";
 public static final String META = "metadata";
@@ -60,10 +59,13 @@ protected Item createItem(S3EventNotificationRecord record) {
 			.withLong(SIZE, this.getSizeAsLong(s3Entity))
 			.withString(ACTION,
 					this.getEventName(record));
-	String type = this.getSubFolder(s3Entity.getObject()
+
+	String fileName = getFileName(s3Entity.getObject()
 			.getKey());
-	if (type != null) {
-		item.withString(TYPE, type);
+
+	String ext = getExtension(fileName);
+	if (ext != null) {
+		item.withString(TYPE, ext);
 	}
 
 	String metadata = this.getMetadata(s3Entity);
@@ -73,4 +75,5 @@ protected Item createItem(S3EventNotificationRecord record) {
 
 	return item;
 }
+
 }

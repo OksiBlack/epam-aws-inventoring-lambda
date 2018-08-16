@@ -5,6 +5,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.lambda.model.CreateFunctionResult;
 import com.amazonaws.services.lambda.model.UpdateFunctionCodeResult;
+import com.amazonaws.services.s3.model.S3Event;
 import com.ebsco.platform.core.awsclientholders.*;
 import com.ebsco.platform.configuration.ConfigConstants;
 import com.ebsco.platform.configuration.ConfigPropertiesReader;
@@ -17,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.EnumSet;
 import java.util.Properties;
 
 public class AWSPreparationRunner {
@@ -101,7 +103,8 @@ public static void main(String[] args) {
 		lambdaClient.addPermissionForS3ToInvokeLambda(funcName);
 
 		/*	Configure a Bucket for Notifications (Message Destination: AWS Lambda Function)	*/
-		s3Client.addBucketNotificationConfiguration(bName, functionArn);
+
+		s3Client.setBucketNotificationConfigurationForFunction(bName, functionArn, EnumSet.of(S3Event.ObjectCreated, S3Event.ObjectRemoved));
 
 
 	}

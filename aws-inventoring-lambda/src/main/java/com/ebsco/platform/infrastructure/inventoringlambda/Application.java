@@ -30,6 +30,7 @@ public static final String ALLOWED_DIRECTORIES = "InventoryLambda_ALLOWED_DIRECT
 public static final String LOG_ENABLED = "InventoryLambda_LOG_ENABLED";
 public static final String ALL_DIRECTORIES = "all";
 public static final String PATH_DELIMITER = "/";
+public static final String EXT_DOT_SYMBOL = ".";
 private AmazonS3 s3Client;
 private DynamoDB dynamoDb;
 private List<String> allowedDirectories;
@@ -169,10 +170,35 @@ protected void log(String message) {
 }
 
 protected String getSubFolder(String path) {
-	if (path != null && !path.isEmpty() && path.contains(PATH_DELIMITER)) {
+	if(path==null||path.isEmpty()){
+		return null;
+	}
+	if (path.contains(PATH_DELIMITER)) {
 		String[] path_parts = path.split(PATH_DELIMITER);
-		return path_parts.length > 0 ? path_parts[0] : null;
+		return path_parts[path_parts.length-1] ;
 	} else {
+		return path;
+	}
+}
+
+protected String getFileName(String path) {
+	if(path==null||path.isEmpty()){
+		return null;
+	}
+	if (path.contains(PATH_DELIMITER)) {
+		String[] path_parts = path.split(PATH_DELIMITER);
+		return path_parts[path_parts.length-1] ;
+	} else {
+		return path;
+	}
+}
+
+protected String getExtension(String fileName) {
+
+	int i = fileName.lastIndexOf(EXT_DOT_SYMBOL);
+	if(i!=-1 && i<fileName.length()-1){
+		return fileName.substring(i+1);
+	}else{
 		return null;
 	}
 }

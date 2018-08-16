@@ -10,8 +10,7 @@ import com.ebsco.platform.core.awsclientholders.IFaceAWSClientHolder;
 import org.junit.jupiter.api.AfterAll;
 
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+
 
 public abstract class InventoringLambdaTest {
 
@@ -37,6 +36,5 @@ public static void tearDownAfterAll() {
 	dynamoDBClientHolder.shutdown();
 	lambdaClientHolder.shutdown();
 	s3ClientHolder.shutdown();
-	System.out.println("AmazonS3FileUploadTest.tearDownAfterAll");
 }
 }

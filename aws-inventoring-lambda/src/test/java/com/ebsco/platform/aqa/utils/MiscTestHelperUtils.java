@@ -3,7 +3,6 @@ package com.ebsco.platform.aqa.utils;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
-import java.lang.reflect.Executable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
@@ -34,21 +33,37 @@ public static File createSampleFile(String filePrefix,
 					.collect(StringBuilder::new, StringBuilder::append,
 							StringBuilder::append);
 
-			String chars = IntStream.range(0, 127)
+			String chars = IntStream.range(32, 127)
 					.mapToObj(ch -> String.valueOf((char) ch))
 					.collect(Collectors.joining(" ",
-							"[", "]"));
-			writer.write(line.insert(0, "[")
-					.append("]")
+							"\n[", "]"));
+			writer.write(line.insert(0, "\n[")
+					.append("]\n")
+					.append(line)
 					.toString());
-			writer.write(odd.insert(0, "[")
-					.append("]")
+			writer.write(odd.insert(0, "\n[")
+					.append("]\n")
 					.toString());
 			writer.write(chars);
 
 		}
 	}
-	return file.toRealPath().toFile();
+	return file.toRealPath()
+			.toFile();
 }
 
+/**
+ * @param file
+ * @return
+ * @throws IOException
+ */
+public static String fileToObjectKey(File file) throws IOException {
+
+	String canonicalPath = file.getCanonicalPath();
+
+	if (canonicalPath.startsWith(File.separator)) {
+		canonicalPath = canonicalPath.substring(1);
+	}
+	return canonicalPath;
+}
 }
