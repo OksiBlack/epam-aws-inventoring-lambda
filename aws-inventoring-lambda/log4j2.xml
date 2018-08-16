@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration monitorInterval="30" status="warn">
+
+
+   <Properties>
+      <Property name="debug">debug</Property>
+      <Property name="onFail">onFail</Property>
+      <Property name="baseDir">./logs</Property>
+   </Properties>
+
+   <Appenders>
+      <!-- the standard-console-appender -->
+      <Console name="SOUT" target="SYSTEM_OUT">
+         <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="ACCEPT"/>
+
+         <PatternLayout pattern="%d{HH:mm:ss} [%t] %-7level %logger{3} - %msg%n"/>
+      </Console>
+
+      <Console name="SERR" target="SYSTEM_ERR">
+         <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+         <PatternLayout pattern="%d{HH:mm:ss} [%t] %-7level %logger{3} - %msg%n"/>
+      </Console>
+
+     
+
+      <RollingFile name="debug" fileName="${baseDir}/${debug}.log">
+         <FilePattern>${baseDir}/${debug}_%d{yyyy-MM-dd__HH-mm}_%i.log</FilePattern>
+         <PatternLayout>
+            <Pattern>%d{HH:mm:ss} [%t] %-5level %logger{6} - %msg%n</Pattern>
+         </PatternLayout>
+
+
+         <Policies>
+            <TimeBasedTriggeringPolicy interval="10" modulate="true"/>
+            <SizeBasedTriggeringPolicy size="250 MB"/>
+
+         </Policies>
+         <DefaultRolloverStrategy min="1" max="5" fileIndex="max">
+            <Delete basePath="${baseDir}" maxDepth="5">
+               <IfFileName glob="${debug}_*.log"/>
+               <testMode>false</testMode>
+               <IfAccumulatedFileCount exceeds="2"></IfAccumulatedFileCount>
+            </Delete>
+         </DefaultRolloverStrategy>
+      </RollingFile>
+
+
+      <RollingFile name="onFail" fileName="${baseDir}/${onFail}.log">
+         <FilePattern>${baseDir}/${onFail}_%d{yyyy-MM-dd__HH-mm}_%i.log</FilePattern>
+         <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+
+         <PatternLayout>
+            <Pattern>%d{HH:mm:ss} [%t] %-5level %logger{5} - %msg%n</Pattern>
+         </PatternLayout>
+
+         <append>false</append>
+         <!--   <immediateFlush>false</immediateFlush>-->
+         <Policies>
+            <TimeBasedTriggeringPolicy interval="10" modulate="true"/>
+            <SizeBasedTriggeringPolicy size="250 MB"/>
+            <OnStartupTriggeringPolicy/>
+
+         </Policies>
+         <DefaultRolloverStrategy>
+            <Delete basePath="${baseDir}" maxDepth="2">
+               <IfFileName glob="onFail*.log"/>
+
+               <testMode>false</testMode>
+               <IfAccumulatedFileCount exceeds="3"></IfAccumulatedFileCount>
+            </Delete>
+         </DefaultRolloverStrategy>
+      </RollingFile>
+
+
+   </Appenders>
+
+
+   <Loggers>
+      <!-- Every configuration must have a root logger. If one is not configured the default root LoggerConfig is ERROR with Console appender attached. -->
+      <Root level="INFO">
+         <AppenderRef ref="SOUT"/>
+         <AppenderRef ref="SERR"/>
+
+      </Root>
+
+
+	   <Logger name="org.junit" level="DEBUG">
+		   <AppenderRef ref="SOUT"/>
+		   <AppenderRef ref="SERR"/>
+
+	   </Logger>
+      <!-- additivity means, that parent-logger (in every case the root-logger) will also get the chance to log this stuff -->
+      <Logger name="com.ebsco.platform" additivity="TRUE" level="DEBUG">
+         <AppenderRef ref="debug"/>
+         <AppenderRef ref="onFail"/>
+        
+      </Logger>
+
+      <Logger name="com.amazonaws" additivity="TRUE" level="WARN">
+         <AppenderRef ref="debug"/>
+         <AppenderRef ref="onFail"/>
+         <AppenderRef ref="SOUT"/>
+         <AppenderRef ref="SERR"/>
+      </Logger>
+
+      <Logger name="com.amazonaws.request" additivity="TRUE" level="WARN"/>
+
+      <Logger name="org.apache.http.wire" additivity="TRUE" level="ERROR"/>
+
+   </Loggers>
+</Configuration>

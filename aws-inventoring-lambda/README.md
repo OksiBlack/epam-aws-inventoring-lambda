@@ -1,4 +1,4 @@
-# epam-aws-inventoring-lambda #
+# aws-inventoring-lambda module instructions #
 
 1.App configuration depends on awsConfig.properties file included in resources.
 
